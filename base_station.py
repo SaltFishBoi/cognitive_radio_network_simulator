@@ -9,5 +9,5 @@ def function():
 
 
 def function2():
-    print(algorithm.function())
+    algorithm.function()
     return 0
