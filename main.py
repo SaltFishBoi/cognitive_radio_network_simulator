@@ -12,6 +12,8 @@ def main():
     transmission.function()
     algorithm.function()
 
+    print(transmission.get_random_drop())
+
     return 0
 
 
