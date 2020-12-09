@@ -3,14 +3,17 @@
 from random import seed
 from random import random
 
+# constant
+SEED = 1
+
 
 def function():
     print("this is a transmission function")
     return 0
 
 
-def get_random_drop():
+def get_random_drop(s):
     # TODO
-    seed(1)
+    seed(s)
     r = random()
     return r
