@@ -16,8 +16,12 @@ def main():
 
     cpe1 = CPE(1, IDLE, 0.1, 1)
     lbu1 = LBU(2, IDLE, 0.2, 2)
-    cpe_status(cpe1)
-    lbu_status(lbu1)
+    #cpe_status(cpe1)
+    #lbu_status(lbu1)
+
+    env = ENV()
+    e_initialization(env)
+    e_report(env)
 
     return 0
 

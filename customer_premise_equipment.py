@@ -12,17 +12,26 @@ ACK = 1
 NACK = 0
 
 TIMEOUT = 10
+
+# default
 COUNTER_DEFAULT = 1
+STATE_DEFAULT = IDLE
+SIGNAL_STRENGTH_DEFAULT = 1
+PRIVILEGE_DEFAULT = 0
 
 
 # CPE class
 class CPE:
-    def __init__(self, identifier, state, signal_strength, privilege):
+    def __init__(self, identifier,
+                 state=STATE_DEFAULT,
+                 signal_strength=SIGNAL_STRENGTH_DEFAULT,
+                 privilege=PRIVILEGE_DEFAULT,
+                 counter=COUNTER_DEFAULT):
         self.identifier = identifier
         self.state = state
         self.signal_strength = signal_strength
         self.privilege = privilege
-        self.counter = COUNTER_DEFAULT
+        self.counter = counter
 
     def get_identifier(self):
         return self.identifier

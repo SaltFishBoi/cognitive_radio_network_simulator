@@ -4,10 +4,18 @@
 IDLE = 0
 IN_USED = 1
 
+# default
+STATE_DEFAULT = IDLE
+SIGNAL_STRENGTH_DEFAULT = 1
+PRIVILEGE_DEFAULT = 0
+
 
 # LBU class
 class LBU:
-    def __init__(self, identifier, state, signal_strength, privilege):
+    def __init__(self, identifier,
+                 state=STATE_DEFAULT,
+                 signal_strength=SIGNAL_STRENGTH_DEFAULT,
+                 privilege=PRIVILEGE_DEFAULT):
         self.identifier = identifier
         self.state = state
         self.signal_strength = signal_strength
