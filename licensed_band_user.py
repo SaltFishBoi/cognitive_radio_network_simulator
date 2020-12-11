@@ -62,4 +62,13 @@ def lbu_status(lbu):
     return 1
 
 
+def lbu_in_used(source):
+    # TODO
+    if type(source) != LBU:
+        print("This is not a LBU")
+        return 0
+
+    return 1
+
+
 

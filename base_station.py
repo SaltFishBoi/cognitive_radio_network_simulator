@@ -84,4 +84,40 @@ def bs_sense(env):
     return 1
 
 
+def bs_request(source, target):
+    # TODO
+    if (type(source) != BS) | (type(target) != BS):
+        print("This is not a BS")
+        return 0
+
+    return 1
+
+
+def bs_response(source, target):
+    # TODO
+    if (type(source) != BS) | (type(target) != BS):
+        print("This is not a BS")
+        return 0
+
+    return 1
+
+
+def bs_send(source, target):
+    # TODO
+    if (type(source) != BS) | (type(target) != BS):
+        print("This is not a BS")
+        return 0
+
+    return 1
+
+
+def bs_receive(source, target):
+    # TODO
+    if (type(source) != BS) | (type(target) != BS):
+        print("This is not a BS")
+        return 0
+
+    return 1
+
+
 

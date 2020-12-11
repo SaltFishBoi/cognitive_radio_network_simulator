@@ -84,4 +84,40 @@ def cpe_status(cpe):
     return 1
 
 
+def cpe_request(source, target):
+    # TODO
+    if (type(source) != CPE) | (type(target) != CPE):
+        print("This is not a CPE")
+        return 0
+
+    return 1
+
+
+def cpe_response(source, target):
+    # TODO
+    if (type(source) != CPE) | (type(target) != CPE):
+        print("This is not a CPE")
+        return 0
+
+    return 1
+
+
+def cpe_send(source, target):
+    # TODO
+    if (type(source) != CPE) | (type(target) != CPE):
+        print("This is not a CPE")
+        return 0
+
+    return 1
+
+
+def cpe_receive(source, target):
+    # TODO
+    if (type(source) != CPE) | (type(target) != CPE):
+        print("This is not a CPE")
+        return 0
+
+    return 1
+
+
 

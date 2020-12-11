@@ -73,9 +73,7 @@ def e_report(env):
         return 0
 
     for ch in env.channels:
-        print("CH status:" +
-              "\n  id: " + str(ch.identifier) +
-              "\n  state: " + str(ch.state))
+        ch_status(ch)
 
     return 1
 
