@@ -72,7 +72,7 @@ def function():
 def cpe_status(cpe):
     if type(cpe) != CPE:
         print("This is not a CPE")
-        return 0
+        return -1
 
     print("CPE status:" +
           "\n  id: " + str(cpe.identifier) +
@@ -84,38 +84,38 @@ def cpe_status(cpe):
     return 1
 
 
-def cpe_request(source, target):
+def cpe_request(env, source, target):
     # TODO
     if (type(source) != CPE) | (type(target) != CPE):
         print("This is not a CPE")
-        return 0
+        return -1
 
     return 1
 
 
-def cpe_response(source, target):
+def cpe_response(env, source, target):
     # TODO
     if (type(source) != CPE) | (type(target) != CPE):
         print("This is not a CPE")
-        return 0
+        return -1
 
     return 1
 
 
-def cpe_send(source, target):
+def cpe_send(env, source, target, ch):
     # TODO
     if (type(source) != CPE) | (type(target) != CPE):
         print("This is not a CPE")
-        return 0
+        return -1
 
     return 1
 
 
-def cpe_receive(source, target):
+def cpe_receive(env, source, target, ch):
     # TODO
     if (type(source) != CPE) | (type(target) != CPE):
         print("This is not a CPE")
-        return 0
+        return -1
 
     return 1
 

@@ -51,7 +51,7 @@ def function():
 def lbu_status(lbu):
     if type(lbu) != LBU:
         print("This is not a LBU")
-        return 0
+        return -1
 
     print("LBU status:" +
           "\n  id: " + str(lbu.identifier) +
@@ -66,7 +66,7 @@ def lbu_in_used(source):
     # TODO
     if type(source) != LBU:
         print("This is not a LBU")
-        return 0
+        return -1
 
     return 1
 

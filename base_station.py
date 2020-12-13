@@ -1,4 +1,6 @@
-import algorithm
+from algorithm import *
+from transmission import *
+from customer_premise_equipment import *
 
 # Macro/Defines
 # for states and global variables
@@ -19,6 +21,7 @@ TIMEOUT = 10
 # default
 COUNTER_DEFAULT = 1
 STATE_DEFAULT = IDLE
+ID_DEFAULT = 1
 
 
 # BS class
@@ -54,15 +57,10 @@ def function():
     return 0
 
 
-def function2():
-    algorithm.function()
-    return 0
-
-
 def bs_status(bs):
     if type(bs) != bs:
         print("This is not a BS")
-        return 0
+        return -1
 
     print("BS status:" +
           "\n  id: " + str(bs.identifier) +
@@ -76,48 +74,71 @@ def bs_status(bs):
 
 def bs_initialization():
     # TODO
+    bs = BS(ID_DEFAULT)
+    print("Base station initialized.")
+    return bs
+
+
+# modify empty list lt by appending channel id with free state
+def bs_sense(env, lt):
+    # TODO
+    if type(env) != ENV:
+        print("This is not a ENV")
+        return -1
+    if (type(lt) != list) | (lt.length() != 0):
+        print("This is not a empty list")
+        return -1
+
+    for ch in range(NUM_CH_DEFAULT):
+        if env.get_ch_state(ch) == FREE:
+            lt = lt + env.get_ch_identifier(ch)
+
     return 1
 
 
-def bs_sense(env):
+# make a request phrase to a CR device
+def bs_request(env, source, target, ch):
     # TODO
+    if (type(source) != BS) | (type(target) != CPE):
+        print("This is not a BS or target is not a CPE")
+        return -1
+
+    bs_send(env, source, target, REQUEST, ch, RESERVED_CH)
     return 1
 
 
-def bs_request(source, target):
+def bs_response(env, source, target, ch):
     # TODO
-    if (type(source) != BS) | (type(target) != BS):
+    if (type(source) != BS) | (type(target) != CPE):
+        print("This is not a BS or target is not a CPE")
+        return -1
+
+    bs_send(env, source, target, RESPONSE, ch, RESERVED_CH)
+
+    return 1
+
+
+def bs_send(env, source, target, command, payload, ch):
+    # TODO
+    if (type(source) != BS) | (type(target) != CPE):
         print("This is not a BS")
-        return 0
+        return -1
+
+    msg_send = encode(source, target, command, payload)
+    env.set_ch_message(ch, msg_send)
 
     return 1
 
 
-def bs_response(source, target):
+def bs_receive(env, ch):
     # TODO
-    if (type(source) != BS) | (type(target) != BS):
-        print("This is not a BS")
-        return 0
+    if type(env) != ENV:
+        print("This is not a ENV")
+        return -1
 
-    return 1
+    msg_receive = env.get_ch_message(ch)
 
-
-def bs_send(source, target):
-    # TODO
-    if (type(source) != BS) | (type(target) != BS):
-        print("This is not a BS")
-        return 0
-
-    return 1
-
-
-def bs_receive(source, target):
-    # TODO
-    if (type(source) != BS) | (type(target) != BS):
-        print("This is not a BS")
-        return 0
-
-    return 1
+    return decode(msg_receive)
 
 
 

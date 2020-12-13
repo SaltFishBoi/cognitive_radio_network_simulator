@@ -8,7 +8,6 @@ from algorithm import *
 def main():
 
     # base_station.function()
-    # base_station.function2()
     # customer_premise_equipment.function()
     # transmission.function()
     # algorithm.function()
@@ -18,6 +17,8 @@ def main():
     lbu1 = LBU(2, IDLE, 0.2, 2)
     #cpe_status(cpe1)
     #lbu_status(lbu1)
+
+    print(type([1, 2]))
 
     env = ENV()
     e_initialization(env)
