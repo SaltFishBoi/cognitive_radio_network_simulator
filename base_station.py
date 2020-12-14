@@ -1,6 +1,9 @@
 from algorithm import *
 from transmission import *
 from customer_premise_equipment import *
+import threading
+import time
+
 
 # Macro/Defines
 # for states and global variables
@@ -16,7 +19,7 @@ RECEIVE = 4
 ACK = 1
 NACK = 0
 
-TIMEOUT = 10
+BS_TIMEOUT = 10
 
 # default
 COUNTER_DEFAULT = 1
@@ -26,10 +29,9 @@ ID_DEFAULT = 1
 
 # BS class
 class BS:
-    def __init__(self, identifier, state=STATE_DEFAULT, counter=COUNTER_DEFAULT):
+    def __init__(self, identifier, state=STATE_DEFAULT):
         self.identifier = identifier
         self.state = state
-        self.counter = counter
 
     def get_identifier(self):
         return self.identifier
@@ -37,17 +39,9 @@ class BS:
     def get_state(self):
         return self.state
 
-    def get_counter(self):
-        return self.counter
-
     def set_state(self, new_state):
         self.state = new_state
 
-    def increment_counter(self):
-        if self.counter == TIMEOUT:
-            self.counter = 1
-        else:
-            self.counter += 1
 
 # These are the functions involve with the base_station
 
@@ -64,10 +58,7 @@ def bs_status(bs):
 
     print("BS status:" +
           "\n  id: " + str(bs.identifier) +
-          "\n  state: " + str(bs.state) +
-          "\n  signal_strength: " + str(bs.signal_strength) +
-          "\n  privilege: " + str(bs.privilege) +
-          "\n  counter: " + str(bs.counter))
+          "\n  state: " + str(bs.state))
 
     return 1
 
@@ -99,29 +90,43 @@ def bs_sense(env, lt):
 # make a request phrase to a CR device
 def bs_request(env, source, target, ch):
     # TODO
-    if (type(source) != BS) | (type(target) != CPE):
-        print("This is not a BS or target is not a CPE")
+    if (type(source) != CPE) | (type(target) != CPE):
+        print("Source and target are not CPE")
         return -1
 
-    bs_send(env, source, target, REQUEST, ch, RESERVED_CH)
+    send(env, source, target, REQUEST, ch, RESERVED_CH)
     return 1
 
 
+# make a response phrase to a CR device
 def bs_response(env, source, target, ch):
     # TODO
-    if (type(source) != BS) | (type(target) != CPE):
-        print("This is not a BS or target is not a CPE")
+    if (type(source) != CPE) | (type(target) != CPE):
+        print("Source and target are not CPE")
         return -1
 
-    bs_send(env, source, target, RESPONSE, ch, RESERVED_CH)
+    send(env, source, target, RESPONSE, ch, RESERVED_CH)
 
     return 1
 
 
-def bs_send(env, source, target, command, payload, ch):
+def bs_send(env, source, target, ch):
     # TODO
-    if (type(source) != BS) | (type(target) != CPE):
-        print("This is not a BS")
+
+    return 1
+
+
+def bs_receive(en, source, target, ch):
+    # TODO
+
+    return 1
+
+
+# pure send message at any channel to CR devices
+def send(env, source, target, command, payload, ch):
+    # TODO
+    if (type(source) != CPE) | (type(target) != CPE):
+        print("Source and target are not CPE")
         return -1
 
     msg_send = encode(source, target, command, payload)
@@ -130,7 +135,8 @@ def bs_send(env, source, target, command, payload, ch):
     return 1
 
 
-def bs_receive(env, ch):
+# pure receive message at a channel
+def receive(env, ch):
     # TODO
     if type(env) != ENV:
         print("This is not a ENV")

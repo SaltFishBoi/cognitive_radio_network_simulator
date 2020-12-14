@@ -1,4 +1,7 @@
-# These are the functions involve with the customer_premise_equipment
+from transmission import *
+import threading
+import time
+# These are the functions involve with the customer_premise_equipment or AP (Access points for BS)
 
 # state constants
 IDLE = 0
@@ -11,7 +14,10 @@ RECEIVE = 4
 ACK = 1
 NACK = 0
 
-TIMEOUT = 10
+CPE_TIMEOUT = 10
+TIMER_DEFAULT = 0
+TIME_OUT = 1
+RECEIVE_TIME_INTERVAL = 1
 
 # default
 COUNTER_DEFAULT = 1
@@ -25,13 +31,14 @@ class CPE:
     def __init__(self, identifier,
                  state=STATE_DEFAULT,
                  signal_strength=SIGNAL_STRENGTH_DEFAULT,
-                 privilege=PRIVILEGE_DEFAULT,
-                 counter=COUNTER_DEFAULT):
+                 channel=RESERVED_CH,
+                 timer=TIMER_DEFAULT):
+
         self.identifier = identifier
         self.state = state
         self.signal_strength = signal_strength
-        self.privilege = privilege
-        self.counter = counter
+        self.channel = channel
+        self.timer=timer
 
     def get_identifier(self):
         return self.identifier
@@ -42,11 +49,11 @@ class CPE:
     def get_signal_strength(self):
         return self.signal_strength
 
-    def get_privilege(self):
-        return self.privilege
+    def get_channel(self):
+        return self.channel
 
-    def get_counter(self):
-        return self.counter
+    def get_timer(self):
+        return self.timer
 
     def set_state(self, new_state):
         self.state = new_state
@@ -54,15 +61,11 @@ class CPE:
     def set_signal_strength(self, new_signal_strength):
         self.signal_strength = new_signal_strength
 
-    def set_privilege(self, new_privilege):
-        self.privilege = new_privilege
+    def set_channel(self, new_channel):
+        self.channel = new_channel
 
-    def increment_counter(self):
-        if self.counter == TIMEOUT:
-            self.counter = 1
-        else:
-            self.counter += 1
-
+    def set_timer(self, new_timer):
+        self.timer = new_timer
 
 def function():
     print("this is a customer premise equipment function")
@@ -78,46 +81,105 @@ def cpe_status(cpe):
           "\n  id: " + str(cpe.identifier) +
           "\n  state: " + str(cpe.state) +
           "\n  signal_strength: " + str(cpe.signal_strength) +
-          "\n  privilege: " + str(cpe.privilege) +
-          "\n  counter: " + str(cpe.counter))
+          "\n  channel: " + str(cpe.channel) +
+          "\n  timer: " + str(cpe.timer))
 
     return 1
 
 
-def cpe_request(env, source, target):
+# Timer expire
+def cpe_timer_handler(cpe):
+    cpe.set_timer(TIMER_DEFAULT)
+    time.sleep(CPE_TIMEOUT)
+    cpe.set_timer(TIME_OUT)
+    return 0
+
+
+# make a request phrase to a CR device through BS
+def cpe_request(env, source, target, ch):
     # TODO
     if (type(source) != CPE) | (type(target) != CPE):
-        print("This is not a CPE")
+        print("Source and target are not CPE")
         return -1
+
+    # if the source still active and receive not response from other device, it keeps sending request
+    while source.get_state() == REQUEST:
+        # send request
+        send(env, source, target, REQUEST, ch, RESERVED_CH)
+        # start timer
+        t = threading.Thread(target=cpe_timer_handler, args=[source])
+        t.start()
+
+        # loop through these while source's timer times up
+        while source.get_timer() != TIME_OUT:
+            # extract msg from the air
+            msg = receive(env, RESERVED_CH)
+            # match the message expected
+            if (msg[0] == target) and (msg[1] == source) and (msg[2] == RESPONSE) and (msg[3] == ACK):
+                source.set_state(SEND)
+                source.set_channel(ch)
+                # need to set it to time out to get out of this loop
+                source.set_timer(TIME_OUT)
+
+                # end the timer
+                t.join()
+
+            time.sleep(RECEIVE_TIME_INTERVAL)
 
     return 1
 
 
-def cpe_response(env, source, target):
+# make a response phrase to a CR device through BS
+# receiver side never set a timer (either on setup or communication)
+def cpe_response(env, source, target, ch):
     # TODO
     if (type(source) != CPE) | (type(target) != CPE):
-        print("This is not a CPE")
+        print("Source and target are not CPE")
         return -1
+
+    send(env, source, target, RESPONSE, ACK, RESERVED_CH)
+    source.set_state(RECEIVE)
+    source.set_channel(ch)
 
     return 1
 
 
 def cpe_send(env, source, target, ch):
     # TODO
-    if (type(source) != CPE) | (type(target) != CPE):
-        print("This is not a CPE")
-        return -1
 
     return 1
 
 
-def cpe_receive(env, source, target, ch):
+def cpe_receive(en, source, target, ch):
+    # TODO
+
+    return 1
+
+
+# pure send message at any channel to CR devices through BS
+def send(env, source, target, command, payload, ch):
     # TODO
     if (type(source) != CPE) | (type(target) != CPE):
-        print("This is not a CPE")
+        print("Source and target are not CPE")
         return -1
 
+    msg_send = encode(source, target, command, payload)
+    env.set_ch_message(ch, msg_send)
+
     return 1
+
+
+# pure receive message at a channel through BS
+def receive(env, ch):
+    # TODO
+    if type(env) != ENV:
+        print("This is not a ENV")
+        return -1
+
+    msg_receive = env.get_ch_message(ch)
+
+    return decode(msg_receive)
+
 
 
 
