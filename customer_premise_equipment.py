@@ -144,13 +144,78 @@ def cpe_response(env, source, target, ch):
     return 1
 
 
-def cpe_send(env, source, target, ch):
+# timer thread is require
+def cpe_send(env, source, target, ch, message):
     # TODO
+    if (type(source) != CPE) | (type(target) != CPE):
+        print("Source and target are not CPE")
+        return -1
+
+    index = 0
+
+    # if the source still active and receive not response from other device, it keeps sending request
+    while source.get_state() == SEND:
+        # send request
+        send(env, source, target, REQUEST, message[index], ch)
+        # start timer
+        t = threading.Thread(target=cpe_timer_handler, args=[source])
+        t.start()
+
+        # loop through these while source's timer times up
+        while source.get_timer() != TIME_OUT:
+            # extract msg from the air
+            msg = receive(env, ch)
+            # match the message expected
+            if (msg[0] == target) and (msg[1] == source) and (msg[2] == RECEIVE) and (msg[3] == ACK):
+                # need to set it to time out to get out of this loop
+                source.set_timer(TIME_OUT)
+
+                # send next character
+                index = index + 1
+
+                # end the timer
+                t.join()
+
+            time.sleep(RECEIVE_TIME_INTERVAL)
+
+        if index == len(message):
+            source.set_state(IDLE)
 
     return 1
 
 
-def cpe_receive(en, source, target, ch):
+def cpe_receive(env, source, target, ch):
+    # TODO
+    if (type(source) != CPE) | (type(target) != CPE):
+        print("Source and target are not CPE")
+        return -1
+
+    message = []
+
+    # if the source still active and receive not response from other device, it keeps sending request
+    while source.get_state() == RECEIVE:
+        # check for valid receive message
+
+        #
+        msg = receive(env, ch)
+        if (msg[0] == target) and (msg[1] == source) and (msg[2] == SEND) and (msg[3] == 0):
+            source.set_state(IDLE)
+
+        message.append(msg)
+
+        # send ACK for receive knowledge
+        send(env, source, target, RECEIVE, ACK, ch)
+
+        # extract msg from the air in the reserved channel, see for any interruption
+        msg = receive(env, RESERVED_CH)
+        # match the message expected
+        if (msg[0] == target) and (msg[1] == source) and (msg[2] == REQUEST) and (msg[3] == ACK):
+            source.set_state(RESPONSE)
+
+    return 1
+
+
+def cpe_idle(env, source, target):
     # TODO
 
     return 1
