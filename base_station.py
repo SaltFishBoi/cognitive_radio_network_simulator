@@ -29,12 +29,19 @@ ID_DEFAULT = 1
 
 # BS class
 class BS:
-    def __init__(self, identifier, state=STATE_DEFAULT):
+    def __init__(self, identifier, client_list=None, state=STATE_DEFAULT):
         self.identifier = identifier
+        self.client_list = client_list
         self.state = state
 
     def get_identifier(self):
         return self.identifier
+
+    def get_client_list(self):
+        return self.client_list
+
+    def set_client_list(self, client_id, ch):
+        self.client_list[client_id] = ch
 
     def get_state(self):
         return self.state
@@ -94,7 +101,31 @@ def bs_request(env, source, target, ch):
         print("Source and target are not CPE")
         return -1
 
-    send(env, source, target, REQUEST, ch, RESERVED_CH)
+    # if the source still active and receive not response from other device, it keeps sending request
+    while source.get_state() == REQUEST:
+        # send request
+        send(env, source, target, REQUEST, ch, RESERVED_CH)
+        # start timer
+        t = threading.Thread(target=cpe_timer_handler, args=[source])
+        t.start()
+
+        # loop through these while source's timer times up
+        while source.get_timer() != TIME_OUT:
+            # extract msg from the air
+            msg = receive(env, RESERVED_CH)
+            # match the message expected
+            if (msg[0] == target) and (msg[1] == source) and (msg[2] == RESPONSE):
+                source.set_state(SEND)
+                # selected channel is in the msg[3]
+                source.set_channel(msg[3])
+                # need to set it to time out to get out of this loop
+                source.set_timer(TIME_OUT)
+
+                # end the timer
+                t.join()
+
+            time.sleep(RECEIVE_TIME_INTERVAL)
+
     return 1
 
 
@@ -106,6 +137,9 @@ def bs_response(env, source, target, ch):
         return -1
 
     send(env, source, target, RESPONSE, ch, RESERVED_CH)
+    source.set_state(RECEIVE)
+    # TODO
+    # source.set_channel(ch)
 
     return 1
 
@@ -117,6 +151,12 @@ def bs_send(env, source, target, ch):
 
 
 def bs_receive(en, source, target, ch):
+    # TODO
+
+    return 1
+
+
+def bs_idle(env, source, target):
     # TODO
 
     return 1

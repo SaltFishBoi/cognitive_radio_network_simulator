@@ -67,6 +67,7 @@ class CPE:
     def set_timer(self, new_timer):
         self.timer = new_timer
 
+
 def function():
     print("this is a customer premise equipment function")
     return 0
@@ -96,7 +97,8 @@ def cpe_timer_handler(cpe):
 
 
 # make a request phrase to a CR device through BS
-def cpe_request(env, source, target, ch):
+# request with unknown ch, let BS decide
+def cpe_request(env, source, target):
     # TODO
     if (type(source) != CPE) | (type(target) != CPE):
         print("Source and target are not CPE")
@@ -105,7 +107,7 @@ def cpe_request(env, source, target, ch):
     # if the source still active and receive not response from other device, it keeps sending request
     while source.get_state() == REQUEST:
         # send request
-        send(env, source, target, REQUEST, ch, RESERVED_CH)
+        send(env, source, target, REQUEST, 0, RESERVED_CH)
         # start timer
         t = threading.Thread(target=cpe_timer_handler, args=[source])
         t.start()
@@ -115,9 +117,10 @@ def cpe_request(env, source, target, ch):
             # extract msg from the air
             msg = receive(env, RESERVED_CH)
             # match the message expected
-            if (msg[0] == target) and (msg[1] == source) and (msg[2] == RESPONSE) and (msg[3] == ACK):
+            if (msg[0] == target) and (msg[1] == source) and (msg[2] == RESPONSE):
                 source.set_state(SEND)
-                source.set_channel(ch)
+                # selected channel is in the msg[3]
+                source.set_channel(msg[3])
                 # need to set it to time out to get out of this loop
                 source.set_timer(TIME_OUT)
 
@@ -137,7 +140,7 @@ def cpe_response(env, source, target, ch):
         print("Source and target are not CPE")
         return -1
 
-    send(env, source, target, RESPONSE, ACK, RESERVED_CH)
+    send(env, source, target, RESPONSE, ch, RESERVED_CH)
     source.set_state(RECEIVE)
     source.set_channel(ch)
 
@@ -244,7 +247,6 @@ def receive(env, ch):
     msg_receive = env.get_ch_message(ch)
 
     return decode(msg_receive)
-
 
 
 
