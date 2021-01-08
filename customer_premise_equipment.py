@@ -5,10 +5,12 @@ import time
 
 # state constants
 IDLE = 0
-REQUEST = 1
-RESPONSE = 2
-SEND = 3
-RECEIVE = 4
+CR_REQUEST = 1
+CR_RESPONSE = 2
+CR_SEND = 3
+CR_RECEIVE = 4
+BS_REQUEST = 5
+BS_RESPONSE = 6
 
 # responses
 ACK = 1
@@ -105,9 +107,10 @@ def cpe_request(env, source, target):
         return -1
 
     # if the source still active and receive not response from other device, it keeps sending request
-    while source.get_state() == REQUEST:
+    while source.get_state() == CR_REQUEST:
         # send request
-        send(env, source, target, REQUEST, 0, RESERVED_CH)
+        # channel is 0 because it doesn't know what channel to be selected
+        send(env, source, target, CR_REQUEST, 0, RESERVED_CH)
         # start timer
         t = threading.Thread(target=cpe_timer_handler, args=[source])
         t.start()
@@ -117,8 +120,8 @@ def cpe_request(env, source, target):
             # extract msg from the air
             msg = receive(env, RESERVED_CH)
             # match the message expected
-            if (msg[0] == target) and (msg[1] == source) and (msg[2] == RESPONSE):
-                source.set_state(SEND)
+            if (msg[0] == target) and (msg[1] == source) and (msg[2] == BS_RESPONSE):
+                source.set_state(CR_SEND)
                 # selected channel is in the msg[3]
                 source.set_channel(msg[3])
                 # need to set it to time out to get out of this loop
@@ -140,8 +143,8 @@ def cpe_response(env, source, target, ch):
         print("Source and target are not CPE")
         return -1
 
-    send(env, source, target, RESPONSE, ch, RESERVED_CH)
-    source.set_state(RECEIVE)
+    send(env, source, target, CR_RESPONSE, ch, RESERVED_CH)
+    source.set_state(CR_RECEIVE)
     source.set_channel(ch)
 
     return 1
@@ -157,9 +160,9 @@ def cpe_send(env, source, target, ch, message):
     index = 0
 
     # if the source still active and receive not response from other device, it keeps sending request
-    while source.get_state() == SEND:
+    while source.get_state() == CR_SEND:
         # send request
-        send(env, source, target, REQUEST, message[index], ch)
+        send(env, source, target, CR_SEND, message[index], ch)
         # start timer
         t = threading.Thread(target=cpe_timer_handler, args=[source])
         t.start()
@@ -169,7 +172,7 @@ def cpe_send(env, source, target, ch, message):
             # extract msg from the air
             msg = receive(env, ch)
             # match the message expected
-            if (msg[0] == target) and (msg[1] == source) and (msg[2] == RECEIVE) and (msg[3] == ACK):
+            if (msg[0] == target) and (msg[1] == source) and (msg[2] == CR_RECEIVE) and (msg[3] == ACK):
                 # need to set it to time out to get out of this loop
                 source.set_timer(TIME_OUT)
 
@@ -196,24 +199,26 @@ def cpe_receive(env, source, target, ch):
     message = []
 
     # if the source still active and receive not response from other device, it keeps sending request
-    while source.get_state() == RECEIVE:
+    while source.get_state() == CR_RECEIVE:
         # check for valid receive message
 
-        #
         msg = receive(env, ch)
-        if (msg[0] == target) and (msg[1] == source) and (msg[2] == SEND) and (msg[3] == 0):
+        # check end of the message
+        if (msg[0] == target) and (msg[1] == source) and (msg[2] == CR_SEND) and (msg[3] == 0):
             source.set_state(IDLE)
 
         message.append(msg)
 
         # send ACK for receive knowledge
-        send(env, source, target, RECEIVE, ACK, ch)
+        send(env, source, target, CR_RECEIVE, ACK, ch)
 
         # extract msg from the air in the reserved channel, see for any interruption
         msg = receive(env, RESERVED_CH)
         # match the message expected
-        if (msg[0] == target) and (msg[1] == source) and (msg[2] == REQUEST) and (msg[3] == ACK):
-            source.set_state(RESPONSE)
+        if (msg[0] == target) and (msg[1] == source) and (msg[2] == CR_REQUEST) and (msg[3] == ACK):
+            source.set_state(CR_RESPONSE)
+
+        time.sleep(RECEIVE_TIME_INTERVAL)
 
     return 1
 
