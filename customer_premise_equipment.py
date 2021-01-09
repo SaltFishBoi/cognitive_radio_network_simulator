@@ -8,7 +8,6 @@ import time
 # state constants
 IDLE = 0
 CR_REQUEST = 1
-CR_RESPONSE = 2
 CR_SEND = 3
 CR_RECEIVE = 4
 BS_REQUEST = 5
@@ -40,7 +39,7 @@ cr5_actions = [(6, 6), (6, 6), (6, 6), (6, 6), (6, 6), (6, 6)]
 ar6_actions = [(7, 5), (7, 5), (7, 5), (7, 5), (7, 5), (7, 5)]
 
 # message constant
-message = "MESSAGE"
+send_message = "MESSAGE"
 
 
 # CPE class
@@ -96,6 +95,20 @@ def function():
 def cpe_process(env, device, actions):
     # TODO
     i = 0
+
+    while True:
+        if device.get_state() == CR_REQUEST:
+            cpe_request(env, device, actions[i][1])
+        elif device.get_state() == CR_SEND:
+            #
+        elif device.get_state() == CR_RECEIVE:
+            #
+        else: # IDLE state
+            if i < len(actions):
+                device.set_state(CR_REQUEST)
+
+
+
 
     while i < len(actions):
         delay = actions[i][0]
@@ -160,6 +173,15 @@ def cpe_request(env, source, target):
                 # need to set it to time out to get out of this loop
                 source.set_timer(TIME_OUT)
 
+                # end the timer
+                t.join()
+
+            if (msg[1] == source) and (msg[2] == BS_REQUEST):
+                cpe_response(env, source, msg[0], msg[3])
+                source.set_state(CR_RECEIVE)
+                source.set_channel(msg[3])
+                # need to set it to time out to get out of this loop
+                source.set_timer(TIME_OUT)
                 # end the timer
                 t.join()
 
