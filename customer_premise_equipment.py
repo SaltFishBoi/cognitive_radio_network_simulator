@@ -8,8 +8,9 @@ import time
 # state constants
 IDLE = 0
 CR_REQUEST = 1
-CR_SEND = 3
-CR_RECEIVE = 4
+CR_SEND = 2
+CR_RECEIVE = 3
+DONE = 4
 BS_REQUEST = 5
 BS_RESPONSE = 6
 
@@ -39,7 +40,9 @@ cr5_actions = [(6, 6), (6, 6), (6, 6), (6, 6), (6, 6), (6, 6)]
 ar6_actions = [(7, 5), (7, 5), (7, 5), (7, 5), (7, 5), (7, 5)]
 
 # message constant
-send_message = "MESSAGE"
+SEND_MESSAGE = "MESSAGE"
+
+INTERRUPT_FLAG = 0
 
 
 # CPE class
@@ -96,30 +99,26 @@ def cpe_process(env, device, actions):
     # TODO
     i = 0
 
-    while True:
+    while INTERRUPT_FLAG == 0:
         if device.get_state() == CR_REQUEST:
+            delay = actions[i][0]
+            time.sleep(delay)
+            actions[i] = 0
             cpe_request(env, device, actions[i][1])
         elif device.get_state() == CR_SEND:
-            #
+            cpe_send(env, device, actions[i][1], device.get_channel(), SEND_MESSAGE)
         elif device.get_state() == CR_RECEIVE:
-            #
-        else: # IDLE state
+            m = cpe_receive(env, device, actions[i][1], device.get_channel())
+            print(m)
+        # IDLE state
+        elif device.get_state() == DONE:
+            cpe_done(device)
+            i = i + 1
+        else:
             if i < len(actions):
                 device.set_state(CR_REQUEST)
 
-
-
-
-    while i < len(actions):
-        delay = actions[i][0]
-        time.sleep(delay)
-        actions[i] = 0
-
-        cpe_request(env, device, actions[i][1])
-
-        i = i + 1
-
-    return 1
+    return 0
 
 
 def cpe_status(cpe):
@@ -215,7 +214,11 @@ def cpe_send(env, source, target, ch, message):
     # if the source still active and receive not response from other device, it keeps sending request
     while source.get_state() == CR_SEND:
         # send request
-        send(env, source, target, CR_SEND, message[index], ch)
+        if index == len(message):
+            send(env, source, target, CR_SEND, 0, ch)
+        else:
+            send(env, source, target, CR_SEND, message[index], ch)
+
         # start timer
         t = threading.Thread(target=cpe_timer_handler, args=[source])
         t.start()
@@ -237,8 +240,8 @@ def cpe_send(env, source, target, ch, message):
 
             time.sleep(RECEIVE_TIME_INTERVAL)
 
-        if index == len(message):
-            source.set_state(IDLE)
+        if index > len(message):
+            source.set_state(DONE)
 
     return 1
 
@@ -278,6 +281,12 @@ def cpe_receive(env, source, target, ch):
 def cpe_idle(env, source, target):
     # TODO
 
+    return 1
+
+
+def cpe_done(source):
+
+    source.set_state(IDLE)
     return 1
 
 
