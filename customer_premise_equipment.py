@@ -3,6 +3,8 @@ import threading
 import time
 # These are the functions involve with the customer_premise_equipment or AP (Access points for BS)
 
+# task 1/9 need to double check the state, can't be at request all time. Need to come out to listen
+
 # state constants
 IDLE = 0
 CR_REQUEST = 1
@@ -26,6 +28,19 @@ COUNTER_DEFAULT = 1
 STATE_DEFAULT = IDLE
 SIGNAL_STRENGTH_DEFAULT = 1
 PRIVILEGE_DEFAULT = 0
+
+# actions list
+# (delay, target)
+cr0_actions = [(1, 1), (1, 1), (1, 1), (1, 1), (1, 1), (1, 1)]
+cr1_actions = [(2, 0), (2, 2), (2, 0), (2, 2), (2, 0), (2, 2)]
+ar2_actions = [(3, 0), (3, 1), (3, 3), (3, 4), (3, 5), (3, 6)]
+cr3_actions = [(4, 6), (4, 5), (4, 4), (4, 2), (4, 1), (4, 0)]
+ar4_actions = [(5, 5), (5, 5), (5, 1), (5, 1), (5, 0), (5, 0)]
+cr5_actions = [(6, 6), (6, 6), (6, 6), (6, 6), (6, 6), (6, 6)]
+ar6_actions = [(7, 5), (7, 5), (7, 5), (7, 5), (7, 5), (7, 5)]
+
+# message constant
+message = "MESSAGE"
 
 
 # CPE class
@@ -70,9 +85,28 @@ class CPE:
         self.timer = new_timer
 
 
+# actions is construct of list of actions to be execute after certain amount of delay
+
+
 def function():
     print("this is a customer premise equipment function")
     return 0
+
+
+def cpe_process(env, device, actions):
+    # TODO
+    i = 0
+
+    while i < len(actions):
+        delay = actions[i][0]
+        time.sleep(delay)
+        actions[i] = 0
+
+        cpe_request(env, device, actions[i][1])
+
+        i = i + 1
+
+    return 1
 
 
 def cpe_status(cpe):
@@ -101,7 +135,6 @@ def cpe_timer_handler(cpe):
 # make a request phrase to a CR device through BS
 # request with unknown ch, let BS decide
 def cpe_request(env, source, target):
-    # TODO
     if (type(source) != CPE) | (type(target) != CPE):
         print("Source and target are not CPE")
         return -1
@@ -138,7 +171,6 @@ def cpe_request(env, source, target):
 # make a response phrase to a CR device through BS
 # receiver side never set a timer (either on setup or communication)
 def cpe_response(env, source, target, ch):
-    # TODO
     if (type(source) != CPE) | (type(target) != CPE):
         print("Source and target are not CPE")
         return -1
@@ -152,7 +184,6 @@ def cpe_response(env, source, target, ch):
 
 # timer thread is require
 def cpe_send(env, source, target, ch, message):
-    # TODO
     if (type(source) != CPE) | (type(target) != CPE):
         print("Source and target are not CPE")
         return -1
@@ -191,7 +222,6 @@ def cpe_send(env, source, target, ch, message):
 
 
 def cpe_receive(env, source, target, ch):
-    # TODO
     if (type(source) != CPE) | (type(target) != CPE):
         print("Source and target are not CPE")
         return -1
@@ -231,7 +261,6 @@ def cpe_idle(env, source, target):
 
 # pure send message at any channel to CR devices through BS
 def send(env, source, target, command, payload, ch):
-    # TODO
     if (type(source) != CPE) | (type(target) != CPE):
         print("Source and target are not CPE")
         return -1
@@ -244,7 +273,6 @@ def send(env, source, target, command, payload, ch):
 
 # pure receive message at a channel through BS
 def receive(env, ch):
-    # TODO
     if type(env) != ENV:
         print("This is not a ENV")
         return -1

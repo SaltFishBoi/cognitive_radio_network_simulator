@@ -60,6 +60,12 @@ def function():
     return 0
 
 
+def bs_process(env, station):
+    # TODO
+
+    return 1
+
+
 def bs_status(bs):
     if type(bs) != bs:
         print("This is not a BS")
@@ -81,7 +87,6 @@ def bs_timer_handler(bs):
 
 
 def bs_initialization():
-    # TODO
     bs = BS(ID_DEFAULT)
     print("Base station initialized.")
     return bs
@@ -89,7 +94,6 @@ def bs_initialization():
 
 # modify empty list lt by appending channel id with free state
 def bs_sense(env, lt):
-    # TODO
     if type(env) != ENV:
         print("This is not a ENV")
         return -1
@@ -106,7 +110,6 @@ def bs_sense(env, lt):
 
 # make a request phrase to a CR device
 def bs_request(env, source, target, station, ch):
-    # TODO
     if (type(source) != CPE) | (type(target) != CPE):
         print("Source and target are not CPE")
         return -1
@@ -146,7 +149,6 @@ def bs_request(env, source, target, station, ch):
 
 # make a response phrase to a CR device
 def bs_response(env, source, target, station, ch):
-    # TODO
     if (type(source) != CPE) | (type(target) != CPE):
         print("Source and target are not CPE")
         return -1
@@ -165,7 +167,6 @@ def bs_idle(env, source, target):
 
 # pure send message at any channel to CR devices
 def send(env, source, target, command, payload, ch):
-    # TODO
     if (type(source) != CPE) | (type(target) != CPE):
         print("Source and target are not CPE")
         return -1
@@ -178,7 +179,6 @@ def send(env, source, target, command, payload, ch):
 
 # pure receive message at a channel
 def receive(env, ch):
-    # TODO
     if type(env) != ENV:
         print("This is not a ENV")
         return -1
@@ -186,6 +186,7 @@ def receive(env, ch):
     msg_receive = env.get_ch_message(ch)
 
     return decode(msg_receive)
+
 
 
 
