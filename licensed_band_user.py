@@ -1,3 +1,4 @@
+from transmission import *
 # These are the functions involve with the customer_premise_equipment
 
 # state constants
@@ -6,6 +7,7 @@ IN_USED = 1
 
 # default
 STATE_DEFAULT = IDLE
+BAND_DEFAULT = 0
 SIGNAL_STRENGTH_DEFAULT = 1
 PRIVILEGE_DEFAULT = 0
 
@@ -14,9 +16,11 @@ PRIVILEGE_DEFAULT = 0
 class LBU:
     def __init__(self, identifier,
                  state=STATE_DEFAULT,
+                 band=BAND_DEFAULT,
                  signal_strength=SIGNAL_STRENGTH_DEFAULT,
                  privilege=PRIVILEGE_DEFAULT):
         self.identifier = identifier
+        self.band = band
         self.state = state
         self.signal_strength = signal_strength
         self.privilege = privilege
@@ -26,6 +30,9 @@ class LBU:
 
     def get_state(self):
         return self.state
+
+    def get_band(self):
+        return self.band
 
     def get_signal_strength(self):
         return self.signal_strength
@@ -55,6 +62,7 @@ def lbu_status(lbu):
 
     print("LBU status:" +
           "\n  id: " + str(lbu.identifier) +
+          "\n  licensed band: " + str(lbu.band) +
           "\n  state: " + str(lbu.state) +
           "\n  signal_strength: " + str(lbu.signal_strength) +
           "\n  privilege: " + str(lbu.privilege))
@@ -62,11 +70,24 @@ def lbu_status(lbu):
     return 1
 
 
-def lbu_in_used(source):
+def lbu_in_used(env, source):
     # TODO
     if type(source) != LBU:
         print("This is not a LBU")
         return -1
+
+    env.set_ch_state(source.get_band(), BUSY)
+
+    return 1
+
+
+def lbu_not_in_used(env, source):
+    # TODO
+    if type(source) != LBU:
+        print("This is not a LBU")
+        return -1
+
+    env.set_ch_state(source.get_band(), FREE)
 
     return 1
 

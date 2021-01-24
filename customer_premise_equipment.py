@@ -8,11 +8,12 @@ import time
 # state constants
 IDLE = 0
 CR_REQUEST = 1
-CR_SEND = 2
-CR_RECEIVE = 3
-DONE = 4
-BS_REQUEST = 5
-BS_RESPONSE = 6
+CR_RESPONSE = 2
+CR_SEND = 3
+CR_RECEIVE = 4
+DONE = 5
+BS_REQUEST = 6
+BS_RESPONSE = 7
 
 # responses
 ACK = 1
@@ -97,14 +98,15 @@ def function():
 
 def cpe_process(env, device, actions):
     # TODO
+    device.set_state(IDLE)
     i = 0
 
     while INTERRUPT_FLAG == 0:
         if device.get_state() == CR_REQUEST:
             delay = actions[i][0]
-            time.sleep(delay)
+            # clear out delay
             actions[i] = 0
-            cpe_request(env, device, actions[i][1])
+            cpe_request(env, device, actions[i][1], delay)
         elif device.get_state() == CR_SEND:
             cpe_send(env, device, actions[i][1], device.get_channel(), SEND_MESSAGE)
         elif device.get_state() == CR_RECEIVE:
@@ -137,27 +139,49 @@ def cpe_status(cpe):
 
 
 # Timer expire
-def cpe_timer_handler(cpe):
+def cpe_timer_handler(cpe, delay):
     cpe.set_timer(TIMER_DEFAULT)
-    time.sleep(CPE_TIMEOUT)
+    time.sleep(delay)
     cpe.set_timer(TIME_OUT)
     return 0
 
 
 # make a request phrase to a CR device through BS
 # request with unknown ch, let BS decide
-def cpe_request(env, source, target):
+def cpe_request(env, source, target, delay):
     if (type(source) != CPE) | (type(target) != CPE):
         print("Source and target are not CPE")
         return -1
 
+    d = threading.Thread(target=cpe_timer_handler, args=[source, delay])
+    d.start()
+    # setup time before the time out.
+    # loop through these while source's timer times up
+    while source.get_timer() != TIME_OUT:
+        # extract msg from the air
+        msg = receive(env, RESERVED_CH)
+
+        # this won't raise a death lock because only one request BS is processing.
+        # in this case, BS picked up other CPE's request.
+        if (msg[1] == source) and (msg[2] == BS_REQUEST):
+            cpe_response(env, source, msg[0], msg[3])
+            source.set_state(CR_RECEIVE)
+            source.set_channel(msg[3])
+            # need to set it to time out to get out of this loop
+            source.set_timer(TIME_OUT)
+            # end the timer
+            d.join()
+
+        time.sleep(RECEIVE_TIME_INTERVAL)
+
+    # start to send out the request
     # if the source still active and receive not response from other device, it keeps sending request
     while source.get_state() == CR_REQUEST:
         # send request
-        # channel is 0 because it doesn't know what channel to be selected
+        # channel is 0 because it doesn't know what channel to be selected yet
         send(env, source, target, CR_REQUEST, 0, RESERVED_CH)
         # start timer
-        t = threading.Thread(target=cpe_timer_handler, args=[source])
+        t = threading.Thread(target=cpe_timer_handler, args=[source, CPE_TIMEOUT])
         t.start()
 
         # loop through these while source's timer times up
@@ -175,6 +199,8 @@ def cpe_request(env, source, target):
                 # end the timer
                 t.join()
 
+            # this won't raise a death lock because only one request BS is processing.
+            # in this case, BS picked up other CPE's request.
             if (msg[1] == source) and (msg[2] == BS_REQUEST):
                 cpe_response(env, source, msg[0], msg[3])
                 source.set_state(CR_RECEIVE)
@@ -220,15 +246,25 @@ def cpe_send(env, source, target, ch, message):
             send(env, source, target, CR_SEND, message[index], ch)
 
         # start timer
-        t = threading.Thread(target=cpe_timer_handler, args=[source])
+        t = threading.Thread(target=cpe_timer_handler, args=[source, CPE_TIMEOUT])
         t.start()
 
         # loop through these while source's timer times up
         while source.get_timer() != TIME_OUT:
             # extract msg from the air
             msg = receive(env, ch)
+
+            # if the channel is occupied by LBU
+            if env.get_ch_state(ch) == BUSY:
+                source.set_state(CR_REQUEST)
+                source.set_timer(TIME_OUT)
+                # send next character
+                index = index + 1
+                # end the timer
+                t.join()
+
             # match the message expected
-            if (msg[0] == target) and (msg[1] == source) and (msg[2] == CR_RECEIVE) and (msg[3] == ACK):
+            elif (msg[0] == target) and (msg[1] == source) and (msg[2] == CR_RECEIVE) and (msg[3] == ACK):
                 # need to set it to time out to get out of this loop
                 source.set_timer(TIME_OUT)
 
@@ -242,6 +278,8 @@ def cpe_send(env, source, target, ch, message):
 
         if index > len(message):
             source.set_state(DONE)
+        elif index == 0:
+            source.set_state(CR_REQUEST)
 
     return 1
 
@@ -261,6 +299,7 @@ def cpe_receive(env, source, target, ch):
         # check end of the message
         if (msg[0] == target) and (msg[1] == source) and (msg[2] == CR_SEND) and (msg[3] == 0):
             source.set_state(IDLE)
+            print(msg)
 
         message.append(msg)
 
@@ -278,6 +317,7 @@ def cpe_receive(env, source, target, ch):
     return 1
 
 
+# probably no need
 def cpe_idle(env, source, target):
     # TODO
 
@@ -311,6 +351,7 @@ def receive(env, ch):
     msg_receive = env.get_ch_message(ch)
 
     return decode(msg_receive)
+
 
 
 

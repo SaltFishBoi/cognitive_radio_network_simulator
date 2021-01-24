@@ -14,8 +14,9 @@ CR_REQUEST = 1
 CR_RESPONSE = 2
 CR_SEND = 3
 CR_RECEIVE = 4
-BS_REQUEST = 5
-BS_RESPONSE = 6
+DONE = 5
+BS_REQUEST = 6
+BS_RESPONSE = 7
 
 # responses
 ACK = 1
@@ -62,8 +63,20 @@ def function():
 
 def bs_process(env, station):
     # TODO
+    station.set_state(IDLE)
+    m = receive(env, RESERVED_CH)
+    ch = RESERVED_CH
 
-    return 1
+    while INTERRUPT_FLAG == 0:
+        if station.get_state() == BS_REQUEST:
+            bs_request(env, m[0], m[1], station, ch)
+        else:
+            m = receive(env, RESERVED_CH)
+            if m[2] == CR_REQUEST:
+                station.set_state(BS_REQUEST)
+                ch = select_channel(env, station)
+
+    return 0
 
 
 def bs_status(bs):
@@ -79,9 +92,9 @@ def bs_status(bs):
 
 
 # Timer expire
-def bs_timer_handler(bs):
+def bs_timer_handler(bs, delay):
     bs.set_timer(TIMER_DEFAULT)
-    time.sleep(BS_TIMEOUT)
+    time.sleep(delay)
     bs.set_timer(TIME_OUT)
     return 0
 
@@ -119,7 +132,7 @@ def bs_request(env, source, target, station, ch):
         # send request
         send(env, source, target, BS_REQUEST, ch, RESERVED_CH)
         # start timer
-        t = threading.Thread(target=cpe_timer_handler, args=[source])
+        t = threading.Thread(target=bs_timer_handler, args=[source, BS_TIMEOUT])
         t.start()
 
         # loop through these while source's timer times up
@@ -128,7 +141,7 @@ def bs_request(env, source, target, station, ch):
             msg = receive(env, RESERVED_CH)
             # match the message expected
             if (msg[0] == target) and (msg[1] == source) and (msg[2] == CR_RESPONSE):
-                station.set_state(BS_REQUEST)
+                bs_response(env, source, target, station, ch)
 
                 # selected channel is in the msg[3]
                 # source.set_channel(msg[3])
@@ -159,6 +172,7 @@ def bs_response(env, source, target, station, ch):
     return 1
 
 
+# probably no need
 def bs_idle(env, source, target):
     # TODO
 
