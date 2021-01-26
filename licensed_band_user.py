@@ -10,6 +10,7 @@ STATE_DEFAULT = IDLE
 BAND_DEFAULT = 0
 SIGNAL_STRENGTH_DEFAULT = 1
 PRIVILEGE_DEFAULT = 0
+NUM_LBU_DEFAULT = 11
 
 
 # LBU class
@@ -63,8 +64,13 @@ def lbu_status(lbu):
     print("LBU status:" +
           "\n  id: " + str(lbu.identifier) +
           "\n  licensed band: " + str(lbu.band) +
-          "\n  state: " + str(lbu.state) +
-          "\n  signal_strength: " + str(lbu.signal_strength) +
+          "\n  state: ", end='')
+    if lbu.state == IDLE:
+        print("IDLE", end='')
+    else:
+        print("IN_USED", end='')
+
+    print("\n  signal_strength: " + str(lbu.signal_strength) +
           "\n  privilege: " + str(lbu.privilege))
 
     return 1
@@ -76,6 +82,7 @@ def lbu_in_used(env, source):
         print("This is not a LBU")
         return -1
 
+    source.set_state(IN_USED)
     env.set_ch_state(source.get_band(), BUSY)
 
     return 1
@@ -87,6 +94,7 @@ def lbu_not_in_used(env, source):
         print("This is not a LBU")
         return -1
 
+    source.set_state(IDLE)
     env.set_ch_state(source.get_band(), FREE)
 
     return 1

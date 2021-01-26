@@ -3,26 +3,65 @@ from customer_premise_equipment import *
 from licensed_band_user import *
 from transmission import *
 from algorithm import *
+from multiprocessing import Process
 
 
 def main():
 
-    # base_station.function()
-    # customer_premise_equipment.function()
-    # transmission.function()
-    # algorithm.function()
-    # print(transmission.get_random_drop(transmission.SEED))
+    # initialize channel list
+    channel_list1 = []
+    for i in range(NUM_CH_DEFAULT):
+        channel = CH(i)
+        channel_list1.append(channel)
+    # initialize environment
+    env1 = ENV(channel_list1)
 
-    cpe1 = CPE(1, IDLE, 0.1, 1)
-    lbu1 = LBU(2, IDLE, 0.2, 2)
-    #cpe_status(cpe1)
-    #lbu_status(lbu1)
+    # initialize license band user list
+    lbu_list1 = []
+    for i in range(NUM_LBU_DEFAULT):
+        lbu = LBU(i, STATE_DEFAULT, i)
+        lbu_list1.append(lbu)
 
-    print(type([1, 2]))
+    lbu_in_used(env1, lbu_list1[3])
+    lbu_in_used(env1, lbu_list1[6])
 
-    env = ENV()
-    e_initialization(env)
-    e_report(env)
+    #for lbu in lbu_list1:
+    #    lbu_status(lbu)
+
+    #e_report(env1)
+
+    # initialize customer premise equipment
+    cpe_list1 = []
+    for i in range(NUM_CPE_DEFAULT):
+        cpe = CPE(i)
+        cpe_list1.append(cpe)
+
+    # CPE action list
+    # actions list (EDITABLE)
+    # (delay, target)
+    action_list = [[ACTION(1, 1), ACTION(1, 1), ACTION(1, 1), ACTION(1, 1), ACTION(1, 1), ACTION(1, 1)],
+                   [ACTION(2, 0), ACTION(2, 2), ACTION(2, 0), ACTION(2, 2), ACTION(2, 0), ACTION(2, 2)],
+                   [ACTION(3, 0), ACTION(3, 1), ACTION(3, 3), ACTION(3, 4), ACTION(3, 5), ACTION(3, 6)],
+                   [ACTION(4, 6), ACTION(4, 5), ACTION(4, 4), ACTION(4, 2), ACTION(4, 1), ACTION(4, 0)],
+                   [ACTION(5, 5), ACTION(5, 5), ACTION(5, 1), ACTION(5, 1), ACTION(5, 0), ACTION(5, 0)],
+                   [ACTION(6, 6), ACTION(6, 6), ACTION(6, 6), ACTION(6, 6), ACTION(6, 6), ACTION(6, 6)],
+                   [ACTION(7, 5), ACTION(7, 5), ACTION(7, 5), ACTION(7, 5), ACTION(7, 5), ACTION(7, 5)]]
+
+    # launch multiprocess for CPE
+    proc = []
+    for i in range(NUM_CPE_DEFAULT):
+        p = Process(target=cpe_process, args=(env1, i, cpe_list1, action_list[i]))
+        p.start()
+        proc.append(p)
+
+
+
+
+
+    # recycle all processes
+    for p in proc:
+        p.join()
+
 
     return 0
 

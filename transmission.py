@@ -12,6 +12,7 @@ RESERVED_CH = 0
 # channel status
 FREE = 0
 BUSY = 1
+LEASE = 2
 
 # initial
 NUM_CH_DEFAULT = 11
@@ -115,8 +116,13 @@ def ch_status(ch):
 
     print("CH status:" +
           "\n  id: " + str(ch.identifier) +
-          "\n  state: " + str(ch.state) +
-          "\n message: " + str(ch.message))
+          "\n  state: ", end='')
+    if ch.state == FREE:
+        print("FREE", end='')
+    else:
+        print("BUSY", end='')
+
+    print("\n  message: " + str(ch.message))
 
     return 1
 

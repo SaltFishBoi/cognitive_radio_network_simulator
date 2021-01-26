@@ -29,16 +29,7 @@ COUNTER_DEFAULT = 1
 STATE_DEFAULT = IDLE
 SIGNAL_STRENGTH_DEFAULT = 1
 PRIVILEGE_DEFAULT = 0
-
-# actions list
-# (delay, target)
-cr0_actions = [(1, 1), (1, 1), (1, 1), (1, 1), (1, 1), (1, 1)]
-cr1_actions = [(2, 0), (2, 2), (2, 0), (2, 2), (2, 0), (2, 2)]
-ar2_actions = [(3, 0), (3, 1), (3, 3), (3, 4), (3, 5), (3, 6)]
-cr3_actions = [(4, 6), (4, 5), (4, 4), (4, 2), (4, 1), (4, 0)]
-ar4_actions = [(5, 5), (5, 5), (5, 1), (5, 1), (5, 0), (5, 0)]
-cr5_actions = [(6, 6), (6, 6), (6, 6), (6, 6), (6, 6), (6, 6)]
-ar6_actions = [(7, 5), (7, 5), (7, 5), (7, 5), (7, 5), (7, 5)]
+NUM_CPE_DEFAULT = 7
 
 # message constant
 SEND_MESSAGE = "MESSAGE"
@@ -88,6 +79,22 @@ class CPE:
         self.timer = new_timer
 
 
+class ACTION:
+    def __init__(self, target,
+                 delay):
+        self.target = target
+        self.delay = delay
+
+    def get_target(self):
+        return self.target
+
+    def get_delay(self):
+        return self.delay
+
+    def set_delay(self, new_delay):
+        self.delay = new_delay
+
+
 # actions is construct of list of actions to be execute after certain amount of delay
 
 
@@ -96,21 +103,22 @@ def function():
     return 0
 
 
-def cpe_process(env, device, actions):
+def cpe_process(env, source_num, device_list, actions):
     # TODO
+    device = device_list[source_num]
     device.set_state(IDLE)
     i = 0
 
     while INTERRUPT_FLAG == 0:
         if device.get_state() == CR_REQUEST:
-            delay = actions[i][0]
+            delay = actions[i].get_delay()
             # clear out delay
-            actions[i] = 0
-            cpe_request(env, device, actions[i][1], delay)
+            actions[i].set_delay(0)
+            cpe_request(env, device, device_list[actions[i].get_target()], delay)
         elif device.get_state() == CR_SEND:
             cpe_send(env, device, actions[i][1], device.get_channel(), SEND_MESSAGE)
         elif device.get_state() == CR_RECEIVE:
-            m = cpe_receive(env, device, actions[i][1], device.get_channel())
+            m = cpe_receive(env, device, device_list[actions[i].get_target()], device.get_channel())
             print(m)
         # IDLE state
         elif device.get_state() == DONE:

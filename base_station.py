@@ -149,6 +149,9 @@ def bs_request(env, source, target, station, ch):
                 station.set_client_list(source, ch)
                 station.set_client_list(target, ch)
 
+                # environment update
+                env.set_ch_state(ch, LEASE)
+
                 # need to set it to time out to get out of this loop
                 source.set_timer(TIME_OUT)
 
