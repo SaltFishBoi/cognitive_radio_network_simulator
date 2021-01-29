@@ -36,6 +36,9 @@ def main():
         cpe = CPE(i)
         cpe_list1.append(cpe)
 
+    # initialize base station
+    bs = BS(0, cpe_list1)
+
     # CPE action list
     # actions list (EDITABLE)
     # (delay, target)
@@ -47,21 +50,23 @@ def main():
                    [ACTION(6, 6), ACTION(6, 6), ACTION(6, 6), ACTION(6, 6), ACTION(6, 6), ACTION(6, 6)],
                    [ACTION(7, 5), ACTION(7, 5), ACTION(7, 5), ACTION(7, 5), ACTION(7, 5), ACTION(7, 5)]]
 
+    print("starting")
     # launch multiprocess for CPE
+    b = Process(target=bs_process, args=(env1, bs))
+    b.start()
     proc = []
-    for i in range(NUM_CPE_DEFAULT):
+    for i in range(1):
         p = Process(target=cpe_process, args=(env1, i, cpe_list1, action_list[i]))
         p.start()
         proc.append(p)
 
-
-
-
+    print("running")
 
     # recycle all processes
     for p in proc:
         p.join()
-
+    b.join()
+    print("ending")
 
     return 0
 

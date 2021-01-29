@@ -25,7 +25,7 @@ MESSAGE_MAX_LENGTH = 0b1111111111111111
 
 # CH class
 class CH:
-    def __init__(self, identifier, state=FREE, message=None):
+    def __init__(self, identifier, state=FREE, message=0):
         self.identifier = identifier
         self.state = state
         self.message = message
@@ -139,7 +139,8 @@ def encode(source, target, command, payload):
             (payload >= PAYLOAD_MAX_LENGTH)):
         return -1
 
-    msg = source*(2**13)+target*(2**9)+source*(2**5)+source
+    msg = source*(2**12)+target*(2**8)+command*(2**4)+payload
+    #print('{0:016b}'.format(msg))
 
     return msg
 

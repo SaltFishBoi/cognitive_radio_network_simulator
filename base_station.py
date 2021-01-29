@@ -44,7 +44,7 @@ class BS:
         return self.client_list
 
     def set_client_list(self, client_id, ch):
-        self.client_list[client_id] = ch
+        self.client_list[client_id].set_channel(ch)
 
     def get_state(self):
         return self.state
@@ -72,6 +72,9 @@ def bs_process(env, station):
             bs_request(env, m[0], m[1], station, ch)
         else:
             m = receive(env, RESERVED_CH)
+            print(str(env.get_ch_message(RESERVED_CH)))
+            time.sleep(0.5)
+            #print(m)
             if m[2] == CR_REQUEST:
                 station.set_state(BS_REQUEST)
                 ch = select_channel(env, station)
@@ -96,6 +99,7 @@ def bs_timer_handler(bs, delay):
     bs.set_timer(TIMER_DEFAULT)
     time.sleep(delay)
     bs.set_timer(TIME_OUT)
+    print("bs " + str(bs.get_identifier()) + " time out")
     return 0
 
 
@@ -123,6 +127,7 @@ def bs_sense(env, lt):
 
 # make a request phrase to a CR device
 def bs_request(env, source, target, station, ch):
+    print("bs repeating cpe " + str(source.get_identifier()) + " requesting " + str(target.get_identifier()))
     if (type(source) != CPE) | (type(target) != CPE):
         print("Source and target are not CPE")
         return -1
@@ -165,6 +170,7 @@ def bs_request(env, source, target, station, ch):
 
 # make a response phrase to a CR device
 def bs_response(env, source, target, station, ch):
+    print("bs repeating cpe " + str(source.get_identifier()) + " responding " + str(target.get_identifier()))
     if (type(source) != CPE) | (type(target) != CPE):
         print("Source and target are not CPE")
         return -1

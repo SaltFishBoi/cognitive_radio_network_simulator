@@ -151,16 +151,19 @@ def cpe_timer_handler(cpe, delay):
     cpe.set_timer(TIMER_DEFAULT)
     time.sleep(delay)
     cpe.set_timer(TIME_OUT)
+    print("cpe " + str(cpe.get_identifier()) + " time out")
     return 0
 
 
 # make a request phrase to a CR device through BS
 # request with unknown ch, let BS decide
 def cpe_request(env, source, target, delay):
+    print("cpe " + str(source.get_identifier()) + " requesting " + str(target.get_identifier()))
     if (type(source) != CPE) | (type(target) != CPE):
         print("Source and target are not CPE")
         return -1
 
+    source.set_timer(TIMER_DEFAULT)
     d = threading.Thread(target=cpe_timer_handler, args=[source, delay])
     d.start()
     # setup time before the time out.
@@ -185,15 +188,20 @@ def cpe_request(env, source, target, delay):
     # start to send out the request
     # if the source still active and receive not response from other device, it keeps sending request
     while source.get_state() == CR_REQUEST:
+        print("hi")
         # send request
         # channel is 0 because it doesn't know what channel to be selected yet
         send(env, source, target, CR_REQUEST, 0, RESERVED_CH)
+        print(str(env.get_ch_message(RESERVED_CH)))
+
         # start timer
+        source.set_timer(TIMER_DEFAULT)
         t = threading.Thread(target=cpe_timer_handler, args=[source, CPE_TIMEOUT])
         t.start()
 
         # loop through these while source's timer times up
         while source.get_timer() != TIME_OUT:
+            print("loop")
             # extract msg from the air
             msg = receive(env, RESERVED_CH)
             # match the message expected
@@ -226,6 +234,7 @@ def cpe_request(env, source, target, delay):
 # make a response phrase to a CR device through BS
 # receiver side never set a timer (either on setup or communication)
 def cpe_response(env, source, target, ch):
+    print("cpe " + str(source.get_identifier()) + " responding " + str(target.get_identifier()))
     if (type(source) != CPE) | (type(target) != CPE):
         print("Source and target are not CPE")
         return -1
@@ -239,6 +248,7 @@ def cpe_response(env, source, target, ch):
 
 # timer thread is require
 def cpe_send(env, source, target, ch, message):
+    print("cpe " + str(source.get_identifier()) + " sending to " + str(target.get_identifier()))
     if (type(source) != CPE) | (type(target) != CPE):
         print("Source and target are not CPE")
         return -1
@@ -254,6 +264,7 @@ def cpe_send(env, source, target, ch, message):
             send(env, source, target, CR_SEND, message[index], ch)
 
         # start timer
+        source.set_timer(TIMER_DEFAULT)
         t = threading.Thread(target=cpe_timer_handler, args=[source, CPE_TIMEOUT])
         t.start()
 
@@ -293,6 +304,7 @@ def cpe_send(env, source, target, ch, message):
 
 
 def cpe_receive(env, source, target, ch):
+    print("cpe " + str(source.get_identifier()) + " receiving from " + str(target.get_identifier()))
     if (type(source) != CPE) | (type(target) != CPE):
         print("Source and target are not CPE")
         return -1
@@ -344,7 +356,7 @@ def send(env, source, target, command, payload, ch):
         print("Source and target are not CPE")
         return -1
 
-    msg_send = encode(source, target, command, payload)
+    msg_send = encode(source.get_identifier(), target.get_identifier(), command, payload)
     env.set_ch_message(ch, msg_send)
 
     return 1
