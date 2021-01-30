@@ -3,7 +3,8 @@ from customer_premise_equipment import *
 from licensed_band_user import *
 from transmission import *
 from algorithm import *
-from multiprocessing import Process
+from multiprocessing import Process, Manager
+from multiprocessing.managers import BaseManager
 
 
 def main():
@@ -51,16 +52,26 @@ def main():
                    [ACTION(7, 5), ACTION(7, 5), ACTION(7, 5), ACTION(7, 5), ACTION(7, 5), ACTION(7, 5)]]
 
     print("starting")
+
     # launch multiprocess for CPE
-    b = Process(target=bs_process, args=(env1, bs))
+    BaseManager.register('ENV', ENV)
+    manager = BaseManager()
+    manager.start()
+    inst = manager.ENV()
+
+    # sharable_bs = Value('bs', bs)
+    b = Process(target=bs_process, args=(inst, bs))
     b.start()
     proc = []
     for i in range(1):
-        p = Process(target=cpe_process, args=(env1, i, cpe_list1, action_list[i]))
+        p = Process(target=cpe_process, args=(inst, i, cpe_list1, action_list[i]))
         p.start()
         proc.append(p)
 
     print("running")
+    print(inst)
+    #print(inst.get_channels()[RESERVED_CH])
+    #print(str(inst.get_ch_message(RESERVED_CH)))
 
     # recycle all processes
     for p in proc:

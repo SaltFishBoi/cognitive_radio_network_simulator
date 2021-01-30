@@ -24,55 +24,55 @@ MESSAGE_MAX_LENGTH = 0b1111111111111111
 
 
 # CH class
-class CH:
-    def __init__(self, identifier, state=FREE, message=0):
-        self.identifier = identifier
-        self.state = state
-        self.message = message
-
-    def get_identifier(self):
-        return self.identifier
-
-    def get_state(self):
-        return self.state
-
-    def get_message(self):
-        return self.message
-
-    def set_state(self, new_state):
-        self.state = new_state
-
-    def set_message(self, new_message):
-        self.message = new_message
+# class CH:
+#     def __init__(self, identifier, state=FREE, message=0):
+#         self.identifier = identifier
+#         self.state = state
+#         self.message = message
+#
+#     def get_identifier(self):
+#         return self.identifier
+#
+#     def get_state(self):
+#         return self.state
+#
+#     def get_message(self):
+#         return self.message
+#
+#     def set_state(self, new_state):
+#         self.state = new_state
+#
+#     def set_message(self, new_message):
+#         self.message = new_message
 
 
 # ENV class
 # information about the air
-class ENV:
-    def __init__(self, channels=None, num_channel=NUM_CH_DEFAULT):
-        self.channels = channels
-        self.num_channel = num_channel
-
-    def get_channels(self):
-        return self.channels
-
-    def get_num_channel(self):
-        return self.num_channel
-
-    def get_ch_identifier(self, ch):
-        return self.channels[ch].identifier
-
-    def get_ch_message(self, ch):
-        return self.channels[ch].message
-
-    def get_ch_state(self, ch):
-        return self.channels[ch].state
-
-    def set_ch_state(self, ch, new_state):
-        self.channels[ch].state = new_state
-
-    def set_ch_message(self, ch, new_message):
-        self.channels[ch].message = new_message
+# class ENV:
+#     def __init__(self, channels=None, num_channel=NUM_CH_DEFAULT):
+#         self.channels = channels
+#         self.num_channel = num_channel
+#
+#     def get_channels(self):
+#         return self.channels
+#
+#     def get_num_channel(self):
+#         return self.num_channel
+#
+#     def get_ch_identifier(self, ch):
+#         return self.channels[ch].identifier
+#
+#     def get_ch_message(self, ch):
+#         return self.channels[ch].message
+#
+#     def get_ch_state(self, ch):
+#         return self.channels[ch].state
+#
+#     def set_ch_state(self, ch, new_state):
+#         self.channels[ch].state = new_state
+#
+#     def set_ch_message(self, ch, new_message):
+#         self.channels[ch].message = new_message
 
 
 def function():

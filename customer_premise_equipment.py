@@ -109,16 +109,21 @@ def cpe_process(env, source_num, device_list, actions):
     device.set_state(IDLE)
     i = 0
 
+    print("how")
+    print(env)
+    #print(env.get_channels()[RESERVED_CH])
+    #print(str(env.get_ch_message(RESERVED_CH)))
+
     while INTERRUPT_FLAG == 0:
         if device.get_state() == CR_REQUEST:
             delay = actions[i].get_delay()
             # clear out delay
             actions[i].set_delay(0)
-            cpe_request(env, device, device_list[actions[i].get_target()], delay)
+            cpe_request(env.value, device, device_list[actions[i].get_target()], delay)
         elif device.get_state() == CR_SEND:
-            cpe_send(env, device, actions[i][1], device.get_channel(), SEND_MESSAGE)
+            cpe_send(env.value, device, actions[i][1], device.get_channel(), SEND_MESSAGE)
         elif device.get_state() == CR_RECEIVE:
-            m = cpe_receive(env, device, device_list[actions[i].get_target()], device.get_channel())
+            m = cpe_receive(env.value, device, device_list[actions[i].get_target()], device.get_channel())
             print(m)
         # IDLE state
         elif device.get_state() == DONE:
@@ -192,7 +197,9 @@ def cpe_request(env, source, target, delay):
         # send request
         # channel is 0 because it doesn't know what channel to be selected yet
         send(env, source, target, CR_REQUEST, 0, RESERVED_CH)
-        print(str(env.get_ch_message(RESERVED_CH)))
+        #print(env)
+        #print(env.get_channels()[RESERVED_CH])
+        #print(str(env.get_ch_message(RESERVED_CH)))
 
         # start timer
         source.set_timer(TIMER_DEFAULT)

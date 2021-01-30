@@ -67,17 +67,21 @@ def bs_process(env, station):
     m = receive(env, RESERVED_CH)
     ch = RESERVED_CH
 
+    print("what")
+    print(env)
+    #print(env.get_channels()[RESERVED_CH])
+    #print(str(env.get_ch_message(RESERVED_CH)))
+
     while INTERRUPT_FLAG == 0:
         if station.get_state() == BS_REQUEST:
-            bs_request(env, m[0], m[1], station, ch)
+            bs_request(env.value, m[0], m[1], station, ch)
         else:
-            m = receive(env, RESERVED_CH)
-            print(str(env.get_ch_message(RESERVED_CH)))
-            time.sleep(0.5)
-            #print(m)
+            m = receive(env.value, RESERVED_CH)
+            # time.sleep(0.5)
+            # print(m)
             if m[2] == CR_REQUEST:
                 station.set_state(BS_REQUEST)
-                ch = select_channel(env, station)
+                ch = select_channel(env.value, station)
 
     return 0
 
