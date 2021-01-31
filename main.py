@@ -36,13 +36,13 @@ def main():
     # CPE action list
     # actions list (EDITABLE)
     # (delay, target)
-    action_list = [[ACTION(1, 1), ACTION(1, 1), ACTION(1, 1), ACTION(1, 1), ACTION(1, 1), ACTION(1, 1)],
-                   [ACTION(2, 3), ACTION(2, 2), ACTION(2, 1), ACTION(2, 2), ACTION(2, 1), ACTION(2, 2)],
-                   [ACTION(3, 1), ACTION(3, 1), ACTION(3, 3), ACTION(3, 4), ACTION(3, 5), ACTION(3, 6)],
-                   [ACTION(4, 6), ACTION(4, 5), ACTION(4, 4), ACTION(4, 2), ACTION(4, 1), ACTION(4, 1)],
-                   [ACTION(5, 5), ACTION(5, 5), ACTION(5, 1), ACTION(5, 1), ACTION(5, 1), ACTION(5, 1)],
-                   [ACTION(6, 6), ACTION(6, 6), ACTION(6, 6), ACTION(6, 6), ACTION(6, 6), ACTION(6, 6)],
-                   [ACTION(7, 5), ACTION(7, 5), ACTION(7, 5), ACTION(7, 5), ACTION(7, 5), ACTION(7, 5)]]
+    action_list = [[ACTION(1, 1, 10), ACTION(1, 1, 10), ACTION(1, 1, 10), ACTION(1, 1, 10), ACTION(1, 1, 10)],
+                   [ACTION(2, 3, 10), ACTION(2, 2, 10), ACTION(2, 1, 10), ACTION(2, 2, 10), ACTION(2, 1, 10)],
+                   [ACTION(3, 1, 10), ACTION(3, 1, 10), ACTION(3, 3, 10), ACTION(3, 4, 10), ACTION(3, 5, 10)],
+                   [ACTION(4, 6, 10), ACTION(4, 5, 10), ACTION(4, 4, 10), ACTION(4, 2, 10), ACTION(4, 1, 10)],
+                   [ACTION(5, 5, 10), ACTION(5, 5, 10), ACTION(5, 1, 10), ACTION(5, 1, 10), ACTION(5, 1, 10)],
+                   [ACTION(6, 6, 10), ACTION(6, 6, 10), ACTION(6, 6, 10), ACTION(6, 6, 10), ACTION(6, 6, 10)],
+                   [ACTION(7, 5, 10), ACTION(7, 5, 10), ACTION(7, 5, 10), ACTION(7, 5, 10), ACTION(7, 5, 10)]]
 
     print("starting")
 

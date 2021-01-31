@@ -67,19 +67,19 @@ def bs_process(env, station):
     m = receive(env, RESERVED_CH)
     ch = 0
 
-    print("what")
-    print(env[:])
+    #print("what")
+    #print(env[:])
     #print(env.get_channels()[RESERVED_CH])
     #print(str(env.get_ch_message(RESERVED_CH)))
 
     while INTERRUPT_FLAG == 0:
         if station.get_state() == BS_REQUEST:
-            print("pre-assign ch " + str(ch))
+            #print("pre-assign ch " + str(ch))
             bs_request(env, m[0], m[1], station, ch)
         else:
             m = receive(env, RESERVED_CH)
             time.sleep(0.5)
-            print(env[:])
+            #print(env[:])
             if m[2] == CR_REQUEST:
                 station.set_state(BS_REQUEST)
                 ch = select_channel(env, station)
@@ -129,6 +129,7 @@ def bs_request(env, source, target, station, ch):
         # send request
         print("assign ch " + str(ch))
         send(env, source, target, BS_REQUEST, ch, RESERVED_CH)
+        time.sleep(TIME_INTERVAL)
         print("bs send")
         # start timer
 
@@ -141,6 +142,7 @@ def bs_request(env, source, target, station, ch):
             print("bs loop")
             # extract msg from the air
             msg = receive(env, RESERVED_CH)
+            time.sleep(TIME_INTERVAL)
             # match the message expected
             if (msg[0] == target) and (msg[1] == source) and (msg[2] == CR_RESPONSE):
                 bs_response(env, source, target, station, ch)
@@ -161,7 +163,6 @@ def bs_request(env, source, target, station, ch):
                 t.terminate()
                 t.join()
 
-            time.sleep(RECEIVE_TIME_INTERVAL)
 
     return 1
 
@@ -171,6 +172,7 @@ def bs_response(env, source, target, station, ch):
     print("bs repeating cpe " + str(target) + " responding " + str(source))
 
     send(env, target, source, BS_RESPONSE, ch, RESERVED_CH)
+    time.sleep(TIME_INTERVAL)
     station.set_state(IDLE)
 
     return 1
