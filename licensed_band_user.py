@@ -83,7 +83,7 @@ def lbu_in_used(env, source):
         return -1
 
     source.set_state(IN_USED)
-    env.set_ch_state(source.get_band(), BUSY)
+    set_ch_state(env, source.get_band(), BUSY)
 
     return 1
 
@@ -95,7 +95,7 @@ def lbu_not_in_used(env, source):
         return -1
 
     source.set_state(IDLE)
-    env.set_ch_state(source.get_band(), FREE)
+    set_ch_state(env, source.get_band(), FREE)
 
     return 1
 

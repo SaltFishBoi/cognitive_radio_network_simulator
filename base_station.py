@@ -65,31 +65,29 @@ def bs_process(env, station):
     # TODO
     station.set_state(IDLE)
     m = receive(env, RESERVED_CH)
-    ch = RESERVED_CH
+    ch = 0
 
     print("what")
-    print(env)
+    print(env[:])
     #print(env.get_channels()[RESERVED_CH])
     #print(str(env.get_ch_message(RESERVED_CH)))
 
     while INTERRUPT_FLAG == 0:
         if station.get_state() == BS_REQUEST:
-            bs_request(env.value, m[0], m[1], station, ch)
+            print("pre-assign ch " + str(ch))
+            bs_request(env, m[0], m[1], station, ch)
         else:
-            m = receive(env.value, RESERVED_CH)
-            # time.sleep(0.5)
-            # print(m)
+            m = receive(env, RESERVED_CH)
+            time.sleep(0.5)
+            print(env[:])
             if m[2] == CR_REQUEST:
                 station.set_state(BS_REQUEST)
-                ch = select_channel(env.value, station)
+                ch = select_channel(env, station)
 
     return 0
 
 
 def bs_status(bs):
-    if type(bs) != bs:
-        print("This is not a BS")
-        return -1
 
     print("BS status:" +
           "\n  id: " + str(bs.identifier) +
@@ -99,11 +97,10 @@ def bs_status(bs):
 
 
 # Timer expire
-def bs_timer_handler(bs, delay):
-    bs.set_timer(TIMER_DEFAULT)
+def bs_timer_handler(timer, delay):
+    timer.value = TIMER_DEFAULT
     time.sleep(delay)
-    bs.set_timer(TIME_OUT)
-    print("bs " + str(bs.get_identifier()) + " time out")
+    timer.value = TIME_OUT
     return 0
 
 
@@ -115,12 +112,6 @@ def bs_initialization():
 
 # modify empty list lt by appending channel id with free state
 def bs_sense(env, lt):
-    if type(env) != ENV:
-        print("This is not a ENV")
-        return -1
-    if (type(lt) != list) | (lt.length() != 0):
-        print("This is not a empty list")
-        return -1
 
     for ch in range(NUM_CH_DEFAULT):
         if env.get_ch_state(ch) == FREE:
@@ -131,26 +122,29 @@ def bs_sense(env, lt):
 
 # make a request phrase to a CR device
 def bs_request(env, source, target, station, ch):
-    print("bs repeating cpe " + str(source.get_identifier()) + " requesting " + str(target.get_identifier()))
-    if (type(source) != CPE) | (type(target) != CPE):
-        print("Source and target are not CPE")
-        return -1
+    print("bs repeating cpe " + str(source) + " requesting " + str(target))
 
     # if the source still active and receive not response from other device, it keeps sending request
     while station.get_state() == BS_REQUEST:
         # send request
+        print("assign ch " + str(ch))
         send(env, source, target, BS_REQUEST, ch, RESERVED_CH)
+        print("bs send")
         # start timer
-        t = threading.Thread(target=bs_timer_handler, args=[source, BS_TIMEOUT])
+
+        timer = Value('i', TIMER_DEFAULT)
+        t = Process(target=bs_timer_handler, args=(timer, BS_TIMEOUT))
         t.start()
 
         # loop through these while source's timer times up
-        while station.get_timer() != TIME_OUT:
+        while timer.value != TIME_OUT:
+            print("bs loop")
             # extract msg from the air
             msg = receive(env, RESERVED_CH)
             # match the message expected
             if (msg[0] == target) and (msg[1] == source) and (msg[2] == CR_RESPONSE):
                 bs_response(env, source, target, station, ch)
+                print("bs response and add client list")
 
                 # selected channel is in the msg[3]
                 # source.set_channel(msg[3])
@@ -159,12 +153,12 @@ def bs_request(env, source, target, station, ch):
                 station.set_client_list(target, ch)
 
                 # environment update
-                env.set_ch_state(ch, LEASE)
+                set_ch_state(env, ch, LEASE)
 
                 # need to set it to time out to get out of this loop
-                source.set_timer(TIME_OUT)
-
                 # end the timer
+                timer.value = TIME_OUT
+                t.terminate()
                 t.join()
 
             time.sleep(RECEIVE_TIME_INTERVAL)
@@ -174,12 +168,9 @@ def bs_request(env, source, target, station, ch):
 
 # make a response phrase to a CR device
 def bs_response(env, source, target, station, ch):
-    print("bs repeating cpe " + str(source.get_identifier()) + " responding " + str(target.get_identifier()))
-    if (type(source) != CPE) | (type(target) != CPE):
-        print("Source and target are not CPE")
-        return -1
+    print("bs repeating cpe " + str(target) + " responding " + str(source))
 
-    send(env, source, target, BS_RESPONSE, ch, RESERVED_CH)
+    send(env, target, source, BS_RESPONSE, ch, RESERVED_CH)
     station.set_state(IDLE)
 
     return 1
@@ -190,30 +181,3 @@ def bs_idle(env, source, target):
     # TODO
 
     return 1
-
-
-# pure send message at any channel to CR devices
-def send(env, source, target, command, payload, ch):
-    if (type(source) != CPE) | (type(target) != CPE):
-        print("Source and target are not CPE")
-        return -1
-
-    msg_send = encode(source, target, command, payload)
-    env.set_ch_message(ch, msg_send)
-
-    return 1
-
-
-# pure receive message at a channel
-def receive(env, ch):
-    if type(env) != ENV:
-        print("This is not a ENV")
-        return -1
-
-    msg_receive = env.get_ch_message(ch)
-
-    return decode(msg_receive)
-
-
-
-

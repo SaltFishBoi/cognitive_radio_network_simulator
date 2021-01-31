@@ -2,6 +2,7 @@
 
 from random import seed
 from random import random
+from multiprocessing import Array
 import threading
 import time
 
@@ -74,6 +75,38 @@ MESSAGE_MAX_LENGTH = 0b1111111111111111
 #     def set_ch_message(self, ch, new_message):
 #         self.channels[ch].message = new_message
 
+# --> change to
+# [RESERVED CH, STATE 0, MESSAGE 0, CH 1, STATE 1, MESSAGE 1, ... CH 11, STATE 11, MESSAGE 11]
+def create_environment():
+    env = Array('i', [0]*3*12)
+    for i in range(36):
+        if i % 3 == 0:
+            env[i] = i//3
+        elif i % 3 == 1:
+            env[i] = FREE
+        else:
+            env[i] = 0
+    print(env[:])
+    return env
+
+
+def set_ch_state(env, ch, state):
+    env[(ch*3)+1] = state
+    return 1
+
+
+def set_ch_message(env, ch, message):
+    env[(ch*3)+2] = message
+    return 1
+
+
+def get_ch_message(env, ch):
+    return env[(ch*3)+2]
+
+
+def get_ch_state(env, ch):
+    return env[(ch*3)+1]
+
 
 def function():
     print("this is a transmission function")
@@ -136,7 +169,7 @@ def encode(source, target, command, payload):
     if ((source >= SOURCE_MAX_LENGTH) |
             (target >= TARGET_MAX_LENGTH) |
             (command >= COMMAND_MAX_LENGTH) |
-            (payload >= PAYLOAD_MAX_LENGTH)):
+            (int(payload) >= PAYLOAD_MAX_LENGTH)):
         return -1
 
     msg = source*(2**12)+target*(2**8)+command*(2**4)+payload
@@ -156,3 +189,18 @@ def decode(message):
     payload_masked = message & 0b1111
 
     return source_masked >> 12, target_masked >> 8, command_masked >> 4, payload_masked
+
+
+# pure send message at any channel to CR devices through BS
+def send(env, source, target, command, payload, ch):
+    msg_send = encode(source, target, command, payload)
+    set_ch_message(env, ch, msg_send)
+
+    return 1
+
+
+# pure receive message at a channel through BS
+def receive(env, ch):
+    msg_receive = get_ch_message(env, ch)
+
+    return decode(msg_receive)

@@ -9,6 +9,6 @@ def function():
 
 def select_channel(env, station):
     # TODO
-    ch = 0
+    ch = 1
 
     return ch
