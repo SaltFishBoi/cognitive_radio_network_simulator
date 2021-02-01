@@ -22,7 +22,7 @@ BS_RESPONSE = 7
 ACK = 1
 NACK = 0
 
-BS_TIMEOUT = 10
+BS_TIMEOUT = [2, 3, 5, 7, 9, 11, 13, 17, 19, 23]
 
 # default
 COUNTER_DEFAULT = 1
@@ -79,10 +79,11 @@ def bs_process(env, station):
         else:
             m = receive(env, RESERVED_CH)
             time.sleep(0.5)
-            #print(env[:])
             if m[2] == CR_REQUEST:
                 station.set_state(BS_REQUEST)
                 ch = select_channel(env, station)
+                print("bs see message: ", m[:])
+                print("bs state: ", station.get_state())
 
     return 0
 
@@ -125,6 +126,7 @@ def bs_request(env, source, target, station, ch):
     print("bs repeating cpe " + str(source) + " requesting " + str(target))
 
     # if the source still active and receive not response from other device, it keeps sending request
+    p = 0
     while station.get_state() == BS_REQUEST:
         # send request
         print("assign ch " + str(ch))
@@ -134,7 +136,8 @@ def bs_request(env, source, target, station, ch):
         # start timer
 
         timer = Value('i', TIMER_DEFAULT)
-        t = Process(target=bs_timer_handler, args=(timer, BS_TIMEOUT))
+        t = Process(target=bs_timer_handler, args=(timer, BS_TIMEOUT[p]))
+        p = (p + 1) % 10
         t.start()
 
         # loop through these while source's timer times up
@@ -157,13 +160,14 @@ def bs_request(env, source, target, station, ch):
                 # environment update
                 set_ch_state(env, ch, LEASE)
 
+
                 # need to set it to time out to get out of this loop
                 # end the timer
                 timer.value = TIME_OUT
                 t.terminate()
                 t.join()
 
-
+    print("bs done with one setup")
     return 1
 
 
