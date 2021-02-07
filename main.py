@@ -22,49 +22,40 @@ def main():
 
     print(share_env1[:])
 
-    #e_report(env1)
-
-    # initialize customer premise equipment
-    cpe_list1 = []
-    for i in range(NUM_CPE_DEFAULT):
-        cpe = CPE(i)
-        cpe_list1.append(cpe)
-
     # initialize base station
-    bs = BS(0, cpe_list1)
+    bs = BS(0)
 
     # CPE action list
     # actions list (EDITABLE)
     # (delay, target)
-    action_list = [[ACTION(1, 1, 10), ACTION(1, 1, 10), ACTION(1, 1, 10), ACTION(1, 1, 10), ACTION(1, 1, 10)],
+    action_list = [[ACTION(1, 1, 10), ACTION(1, 2, 10), ACTION(1, 3, 10), ACTION(1, 4, 10), ACTION(1, 5, 10)],
                    [ACTION(2, 3, 10), ACTION(2, 2, 10), ACTION(2, 1, 10), ACTION(2, 2, 10), ACTION(2, 1, 10)],
-                   [ACTION(3, 1, 10), ACTION(3, 1, 10), ACTION(3, 3, 10), ACTION(3, 4, 10), ACTION(3, 5, 10)],
-                   [ACTION(4, 6, 10), ACTION(4, 5, 10), ACTION(4, 4, 10), ACTION(4, 2, 10), ACTION(4, 1, 10)],
-                   [ACTION(5, 5, 10), ACTION(5, 5, 10), ACTION(5, 1, 10), ACTION(5, 1, 10), ACTION(5, 1, 10)],
-                   [ACTION(6, 6, 10), ACTION(6, 6, 10), ACTION(6, 6, 10), ACTION(6, 6, 10), ACTION(6, 6, 10)],
-                   [ACTION(7, 5, 10), ACTION(7, 5, 10), ACTION(7, 5, 10), ACTION(7, 5, 10), ACTION(7, 5, 10)]]
+                   [ACTION(3, 60, 10), ACTION(3, 1, 10), ACTION(3, 3, 10), ACTION(3, 4, 10), ACTION(3, 5, 10)],
+                   [ACTION(4, 60, 10), ACTION(4, 5, 10), ACTION(4, 4, 10), ACTION(4, 2, 10), ACTION(4, 1, 10)],
+                   [ACTION(5, 60, 10), ACTION(5, 5, 10), ACTION(5, 1, 10), ACTION(5, 1, 10), ACTION(5, 1, 10)],
+                   [ACTION(6, 60, 10), ACTION(6, 6, 10), ACTION(6, 6, 10), ACTION(6, 6, 10), ACTION(6, 6, 10)],
+                   [ACTION(7, 60, 10), ACTION(7, 5, 10), ACTION(7, 5, 10), ACTION(7, 5, 10), ACTION(7, 5, 10)]]
 
-    print("starting")
+    print("Program Starts")
 
     # launch multiprocess for CPE
     b = Process(target=bs_process, args=(share_env1, bs))
     b.start()
     proc = []
-    for i in range(2):
-        p = Process(target=cpe_process, args=(share_env1, i, cpe_list1, action_list[i]))
+    for i in range(NUM_CPE_DEFAULT):
+        device = CPE(i)
+        p = Process(target=cpe_process, args=(share_env1, i, device, action_list[i]))
         p.start()
         proc.append(p)
 
-    print("running")
+    print("Program runs")
     print(share_env1[:])
-    #print(inst.get_channels()[RESERVED_CH])
-    #print(str(inst.get_ch_message(RESERVED_CH)))
 
     # recycle all processes
     for p in proc:
         p.join()
     b.join()
-    print("ending")
+    print("Program ends")
 
     return 0
 

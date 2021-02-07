@@ -15,15 +15,12 @@ CR_DONE = 5
 BS_REQUEST = 6
 BS_RESPONSE = 7
 
-# responses
-ACK = 1
-NACK = 0
-
 # request timeout using prime number
 CPE_TIMEOUT = [2, 3, 5, 7, 9, 11, 13, 17, 19, 23]
+TIME_INTERVAL = 0.1
+# time out true or fault
 TIMER_DEFAULT = 0
 TIME_OUT = 1
-TIME_INTERVAL = 0.25
 
 # default
 COUNTER_DEFAULT = 1
@@ -31,9 +28,6 @@ STATE_DEFAULT = IDLE
 SIGNAL_STRENGTH_DEFAULT = 1
 PRIVILEGE_DEFAULT = 0
 NUM_CPE_DEFAULT = 7
-
-# message constant
-SEND_MESSAGE = [1, 2, 3, 4, 5, 6]
 
 INTERRUPT_FLAG = 0
 
@@ -107,9 +101,7 @@ def function():
     return 0
 
 
-def cpe_process(env, source_num, device_list, actions):
-    # TODO
-    device = device_list[source_num]
+def cpe_process(env, source_num, device, actions):
     device.set_state(IDLE)
     i = 0
 
@@ -124,8 +116,7 @@ def cpe_process(env, source_num, device_list, actions):
         elif device.get_state() == CR_SEND:
             cpe_send(env, device, actions[i].get_target(), device.get_channel(), actions[i].get_duration())
         elif device.get_state() == CR_RECEIVE:
-            m = cpe_receive(env, device, device.get_target(), device.get_channel())
-            # print(m)
+            cpe_receive(env, device, device.get_target(), device.get_channel())
         # IDLE state
         elif device.get_state() == CR_DONE:
             cpe_done(env, device, actions[i].get_target(), device.get_channel())
@@ -174,7 +165,7 @@ def cpe_request(env, source, target, delay):
         time.sleep(TIME_INTERVAL)
 
         # this won't raise a death lock because only one request BS is processing.
-        # in this case, BS picked up other CPE's request.
+        # in this case, BS picked up other CPE request.
         if (msg[1] == source.get_identifier()) and (msg[2] == BS_REQUEST):
             print("CPE " + str(msg[0]) + " -> " + str(source.get_identifier()) + " request receive")
             cpe_response(env, source, msg[0], msg[3])
@@ -199,9 +190,9 @@ def cpe_request(env, source, target, delay):
         # start timer
         # prime number wait time
         timer.value = TIMER_DEFAULT
+        print("CPE " + str(source.get_identifier()) + " time out at " + str(CPE_TIMEOUT[p]) + " seconds")
         t = Process(target=cpe_timer_handler, args=(timer, CPE_TIMEOUT[p]))
         p = (p + 1) % len(CPE_TIMEOUT)
-        print("CPE " + str(source.get_identifier()) + " time out at " + str(CPE_TIMEOUT[p]) + " seconds")
         t.start()
 
         # loop through these while source's timer times up
@@ -223,7 +214,7 @@ def cpe_request(env, source, target, delay):
                 t.join()
 
             # this won't raise a death lock because only one request BS is processing.
-            # in this case, BS picked up other CPE's request.
+            # in this case, BS picked up other CPE request.
             elif (msg[1] == source.get_identifier()) and (msg[2] == BS_REQUEST):
                 print("CPE " + str(msg[0]) + " -> " + str(source.get_identifier()) + " request receive")
                 cpe_response(env, source, msg[0], msg[3])
@@ -292,13 +283,6 @@ def cpe_receive(env, source, target, ch):
         # match the message expected
         if get_ch_state(env, ch) == BUSY:
             source.set_state(IDLE)
-
-    return 1
-
-
-# probably no need
-def cpe_idle(env, source, target):
-    # TODO
 
     return 1
 

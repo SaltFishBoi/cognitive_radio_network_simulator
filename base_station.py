@@ -1,7 +1,6 @@
 from algorithm import *
 from transmission import *
 from customer_premise_equipment import *
-import threading
 import time
 
 
@@ -18,33 +17,22 @@ DONE = 5
 BS_REQUEST = 6
 BS_RESPONSE = 7
 
-# responses
-ACK = 1
-NACK = 0
-
-BS_TIMEOUT = 3
+BS_TIMEOUT = 1
 
 # default
-COUNTER_DEFAULT = 1
 STATE_DEFAULT = IDLE
-ID_DEFAULT = 1
+ID_DEFAULT = 0
+TIME_DIVISION = 24
 
 
 # BS class
 class BS:
-    def __init__(self, identifier, client_list=None, state=STATE_DEFAULT):
+    def __init__(self, identifier, state=STATE_DEFAULT):
         self.identifier = identifier
-        self.client_list = client_list
         self.state = state
 
     def get_identifier(self):
         return self.identifier
-
-    def get_client_list(self):
-        return self.client_list
-
-    def set_client_list(self, client_id, ch):
-        self.client_list[client_id].set_channel(ch)
 
     def get_state(self):
         return self.state
@@ -63,26 +51,29 @@ def function():
 
 def bs_process(env, station):
     # TODO
+    start_time = time.time()
     station.set_state(IDLE)
     m = receive(env, RESERVED_CH)
+    selection_table = [[0] * TIME_DIVISION] * NUM_CH_DEFAULT
+    time_div = 0
+    client_list = [0] * NUM_CPE_DEFAULT
     ch = 0
 
-    #print("what")
-    #print(env[:])
-    #print(env.get_channels()[RESERVED_CH])
-    #print(str(env.get_ch_message(RESERVED_CH)))
-
     while INTERRUPT_FLAG == 0:
+
         if station.get_state() == BS_REQUEST:
-            #print("pre-assign ch " + str(ch))
-            bs_request(env, m[0], m[1], station, ch)
+            # print("pre-assign ch " + str(ch))
+            bs_request(env, m[0], m[1], station, client_list, ch)
         else:
             m = receive(env, RESERVED_CH)
-            time.sleep(0.5)
-            if m[2] == CR_REQUEST:
+            time.sleep(TIME_INTERVAL)
+            if m[2] == CR_REQUEST and client_list[m[1]] == 0:
                 station.set_state(BS_REQUEST)
-                ch = select_channel(env, station)
+                time_div = int(time.time() - start_time) % TIME_DIVISION
+                ch = select_channel(env, selection_table, time_div)
 
+        update_channel_table(env, selection_table, time_div)
+        bs_sense(env, client_list)
     return 0
 
 
@@ -109,18 +100,8 @@ def bs_initialization():
     return bs
 
 
-# modify empty list lt by appending channel id with free state
-def bs_sense(env, lt):
-
-    for ch in range(NUM_CH_DEFAULT):
-        if env.get_ch_state(ch) == FREE:
-            lt = lt + env.get_ch_identifier(ch)
-
-    return 1
-
-
 # make a request phrase to a CR device
-def bs_request(env, source, target, station, ch):
+def bs_request(env, source, target, station, client_list, ch):
     print("BS repeat CPE " + str(source) + " -> " + str(target) + " request begins")
 
     # if the source still active and receive not response from other device, it keeps sending request
@@ -151,12 +132,15 @@ def bs_request(env, source, target, station, ch):
                 # selected channel is in the msg[3]
                 # source.set_channel(msg[3])
                 # need to record the CR device channel here
-                station.set_client_list(source, ch)
-                station.set_client_list(target, ch)
+
+                client_list[source] = ch
+                client_list[target] = ch
+
+                #print("set channels.................")
+                #print(client_list[source], client_list[target])
 
                 # environment update
                 set_ch_state(env, ch, LEASE)
-
 
                 # need to set it to time out to get out of this loop
                 # end the timer
@@ -179,8 +163,14 @@ def bs_response(env, source, target, station, ch):
     return 1
 
 
-# probably no need
-def bs_idle(env, source, target):
-    # TODO
+def bs_sense(env, client_list):
+    lease_list = []
+    for ch in range(1, NUM_CH_DEFAULT):
+        if get_ch_state(env, ch) == LEASE:
+            lease_list.append(ch)
+
+    for cr in range(NUM_CPE_DEFAULT):
+        if client_list[cr] not in lease_list:
+            client_list[cr] = 0
 
     return 1
