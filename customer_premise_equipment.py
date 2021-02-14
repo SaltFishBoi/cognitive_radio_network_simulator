@@ -1,5 +1,5 @@
-from transmission import *
 from multiprocessing import Process, Value
+from transmission import *
 import time
 # These are the functions involve with the customer_premise_equipment or AP (Access points for BS)
 
@@ -281,8 +281,8 @@ def cpe_receive(env, source, target, ch):
             set_ch_state(env, ch, IDLE)
 
         # match the message expected
-        if get_ch_state(env, ch) == BUSY:
-            source.set_state(IDLE)
+        # if get_ch_state(env, ch) == BUSY:
+        #    source.set_state(IDLE)
 
     return 1
 

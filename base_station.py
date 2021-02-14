@@ -1,6 +1,6 @@
-from algorithm import *
-from transmission import *
 from customer_premise_equipment import *
+from transmission import *
+from algorithm import *
 import time
 
 
@@ -50,11 +50,11 @@ def function():
 
 
 def bs_process(env, station):
-    # TODO
     start_time = time.time()
     station.set_state(IDLE)
     m = receive(env, RESERVED_CH)
-    selection_table = [[0] * TIME_DIVISION] * NUM_CH_DEFAULT
+    #selection_table = [[0] * TIME_DIVISION] * NUM_CH_DEFAULT
+    selection_table = [[0 for i in range(TIME_DIVISION)] for j in range(NUM_CH_DEFAULT)]
     time_div = 0
     client_list = [0] * NUM_CPE_DEFAULT
     ch = 0
@@ -68,9 +68,12 @@ def bs_process(env, station):
             m = receive(env, RESERVED_CH)
             time.sleep(TIME_INTERVAL)
             if m[2] == CR_REQUEST and client_list[m[1]] == 0:
-                station.set_state(BS_REQUEST)
-                time_div = int(time.time() - start_time) % TIME_DIVISION
+                time_div = (int(time.time() - start_time)//60) % TIME_DIVISION
                 ch = select_channel(env, selection_table, time_div)
+                print_all_ch_state(env)
+                if ch != 0:
+                    station.set_state(BS_REQUEST)
+                    print(int(time.time() - start_time))
 
         update_channel_table(env, selection_table, time_div)
         bs_sense(env, client_list)

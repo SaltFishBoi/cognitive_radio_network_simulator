@@ -5,20 +5,13 @@ from transmission import *
 from algorithm import *
 from multiprocessing import Process
 
+INTERRUPT_FLAG = 0
+
 
 def main():
 
     # initialize environment channel list
     share_env1 = create_environment()
-
-    # initialize license band user list
-    lbu_list1 = []
-    for i in range(NUM_LBU_DEFAULT):
-        lbu = LBU(i, STATE_DEFAULT, i)
-        lbu_list1.append(lbu)
-
-    lbu_in_used(share_env1, lbu_list1[3])
-    lbu_in_used(share_env1, lbu_list1[6])
 
     print(share_env1[:])
 
@@ -30,30 +23,56 @@ def main():
     # (delay, target)
     action_list = [[ACTION(1, 1, 10), ACTION(1, 2, 10), ACTION(1, 3, 10), ACTION(1, 4, 10), ACTION(1, 5, 10)],
                    [ACTION(2, 3, 10), ACTION(2, 2, 10), ACTION(2, 1, 10), ACTION(2, 2, 10), ACTION(2, 1, 10)],
-                   [ACTION(3, 60, 10), ACTION(3, 1, 10), ACTION(3, 3, 10), ACTION(3, 4, 10), ACTION(3, 5, 10)],
-                   [ACTION(4, 60, 10), ACTION(4, 5, 10), ACTION(4, 4, 10), ACTION(4, 2, 10), ACTION(4, 1, 10)],
-                   [ACTION(5, 60, 10), ACTION(5, 5, 10), ACTION(5, 1, 10), ACTION(5, 1, 10), ACTION(5, 1, 10)],
-                   [ACTION(6, 60, 10), ACTION(6, 6, 10), ACTION(6, 6, 10), ACTION(6, 6, 10), ACTION(6, 6, 10)],
-                   [ACTION(7, 60, 10), ACTION(7, 5, 10), ACTION(7, 5, 10), ACTION(7, 5, 10), ACTION(7, 5, 10)]]
+                   [ACTION(3, 62, 10), ACTION(3, 1, 10), ACTION(3, 3, 10), ACTION(3, 4, 10), ACTION(3, 5, 10)],
+                   [ACTION(4, 62, 10), ACTION(4, 5, 10), ACTION(4, 4, 10), ACTION(4, 2, 10), ACTION(4, 1, 10)],
+                   [ACTION(5, 62, 10), ACTION(5, 5, 10), ACTION(5, 1, 10), ACTION(5, 1, 10), ACTION(5, 1, 10)],
+                   [ACTION(6, 62, 10), ACTION(6, 6, 10), ACTION(6, 6, 10), ACTION(6, 6, 10), ACTION(6, 6, 10)],
+                   [ACTION(1, 62, 10), ACTION(1, 5, 10), ACTION(1, 5, 10), ACTION(1, 5, 10), ACTION(1, 5, 10)]]
+
+    schedule_list = [[0, 2, 2, 3, 4],
+                     [0, 2, 2, 3, 4],
+                     [0, 2, 2, 3, 4],
+                     [0, 2, 2, 3, 4],
+                     [0, 2, 2, 3, 4],
+                     [0, 2, 2, 3, 4],
+                     [0, 2, 2, 3, 4],
+                     [0, 2, 2, 3, 4],
+                     [0, 2, 2, 3, 4],
+                     [0, 2, 2, 3, 4],
+                     [0, 2, 2, 3, 4]]
 
     print("Program Starts")
 
     # launch multiprocess for CPE
     b = Process(target=bs_process, args=(share_env1, bs))
+    print("Program runs")
+    cpe_proc = []
+    lbu_proc = []
     b.start()
-    proc = []
+
+    # initialize and launch license band user list
+    for i in range(1, NUM_LBU_DEFAULT+1):
+        device = LBU(i, STATE_DEFAULT, i)
+        l = Process(target=lbu_process, args=(share_env1, i, device, schedule_list[i-1]))
+        l.start()
+        lbu_proc.append(l)
+
+    # initialize and launch customer premise equipment list
     for i in range(NUM_CPE_DEFAULT):
         device = CPE(i)
-        p = Process(target=cpe_process, args=(share_env1, i, device, action_list[i]))
-        p.start()
-        proc.append(p)
+        c = Process(target=cpe_process, args=(share_env1, i, device, action_list[i]))
+        c.start()
+        cpe_proc.append(c)
 
-    print("Program runs")
     print(share_env1[:])
 
     # recycle all processes
-    for p in proc:
-        p.join()
+    for c in cpe_proc:
+        c.join()
+
+    for l in lbu_proc:
+        l.join()
+
     b.join()
     print("Program ends")
 

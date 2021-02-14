@@ -78,7 +78,7 @@ MESSAGE_MAX_LENGTH = 0b1111111111111111
 # --> change to
 # [RESERVED CH, STATE 0, MESSAGE 0, CH 1, STATE 1, MESSAGE 1, ... CH 11, STATE 11, MESSAGE 11]
 def create_environment():
-    env = Array('i', [0]*3*12)
+    env = Array('i', [0]*3*NUM_CH_DEFAULT)
     for i in range(36):
         if i % 3 == 0:
             env[i] = i//3
@@ -113,6 +113,14 @@ def function():
     return 0
 
 
+def print_all_ch_state(env):
+    all_ch = []
+    for c in range(0, NUM_CH_DEFAULT):
+        s = get_ch_state(env, c)
+        all_ch.append(s)
+    print(all_ch)
+
+
 # rate from 0.0 - 1.0
 def get_random_drop(rate):
     # TODO
@@ -123,41 +131,6 @@ def get_random_drop(rate):
         return 1
     else:
         return 0
-
-
-def e_initialization(env):
-    env.channels = []
-    for c in range(env.num_channel):
-        env.channels.append(CH(c))
-
-
-def e_report(env):
-    if type(env) != ENV:
-        print("This is not a ENV")
-        return -1
-
-    for ch in env.channels:
-        ch_status(ch)
-
-    return 1
-
-
-def ch_status(ch):
-    if type(ch) != CH:
-        print("This is not a CH")
-        return -1
-
-    print("CH status:" +
-          "\n  id: " + str(ch.identifier) +
-          "\n  state: ", end='')
-    if ch.state == FREE:
-        print("FREE", end='')
-    else:
-        print("BUSY", end='')
-
-    print("\n  message: " + str(ch.message))
-
-    return 1
 
 
 # 16 bits

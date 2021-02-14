@@ -12,6 +12,10 @@ SIGNAL_STRENGTH_DEFAULT = 1
 PRIVILEGE_DEFAULT = 0
 NUM_LBU_DEFAULT = 11
 
+TIME_DIVISION = 24
+
+INTERRUPT_FLAG = 0
+
 
 # LBU class
 class LBU:
@@ -56,6 +60,28 @@ def function():
     return 0
 
 
+def lbu_process(env, source_num, device, schedule):
+    device.set_state(IDLE)
+    start_time = time.time()
+
+    print("LBU " + str(source_num) + " process begins")
+
+    while INTERRUPT_FLAG == 0:
+        if device.get_state() == IN_USED:
+            lbu_in_used(env, device)
+            print("LBU " + str(source_num) + " uses channel " + str(device.get_band()))
+            time.sleep(60)
+            lbu_not_in_used(env, device)
+            print("LBU " + str(source_num) + " leaves channel " + str(device.get_band()))
+        else:
+            time_div = (int(time.time() - start_time)//60) % TIME_DIVISION
+            if time_div in schedule:
+                device.set_state(IN_USED)
+
+        time.sleep(1)
+    return 0
+
+
 def lbu_status(lbu):
     if type(lbu) != LBU:
         print("This is not a LBU")
@@ -77,7 +103,6 @@ def lbu_status(lbu):
 
 
 def lbu_in_used(env, source):
-    # TODO
     if type(source) != LBU:
         print("This is not a LBU")
         return -1
@@ -89,7 +114,6 @@ def lbu_in_used(env, source):
 
 
 def lbu_not_in_used(env, source):
-    # TODO
     if type(source) != LBU:
         print("This is not a LBU")
         return -1
