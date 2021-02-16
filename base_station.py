@@ -53,7 +53,7 @@ def bs_process(env, station):
     start_time = time.time()
     station.set_state(IDLE)
     m = receive(env, RESERVED_CH)
-    #selection_table = [[0] * TIME_DIVISION] * NUM_CH_DEFAULT
+
     selection_table = [[0 for i in range(TIME_DIVISION)] for j in range(NUM_CH_DEFAULT)]
     time_div = 0
     client_list = [0] * NUM_CPE_DEFAULT
@@ -67,16 +67,15 @@ def bs_process(env, station):
         else:
             m = receive(env, RESERVED_CH)
             time.sleep(TIME_INTERVAL)
+            bs_sense(env, client_list)
             if m[2] == CR_REQUEST and client_list[m[1]] == 0:
                 time_div = (int(time.time() - start_time)//60) % TIME_DIVISION
                 ch = select_channel(env, selection_table, time_div)
-                print_all_ch_state(env)
+
                 if ch != 0:
                     station.set_state(BS_REQUEST)
-                    print(int(time.time() - start_time))
 
         update_channel_table(env, selection_table, time_div)
-        bs_sense(env, client_list)
     return 0
 
 
@@ -132,18 +131,9 @@ def bs_request(env, source, target, station, client_list, ch):
                 bs_response(env, source, target, station, ch)
                 print("BS update client list")
 
-                # selected channel is in the msg[3]
-                # source.set_channel(msg[3])
-                # need to record the CR device channel here
-
                 client_list[source] = ch
                 client_list[target] = ch
-
-                #print("set channels.................")
-                #print(client_list[source], client_list[target])
-
-                # environment update
-                set_ch_state(env, ch, LEASE)
+                #print(client_list)
 
                 # need to set it to time out to get out of this loop
                 # end the timer
@@ -168,12 +158,15 @@ def bs_response(env, source, target, station, ch):
 
 def bs_sense(env, client_list):
     lease_list = []
+    #print(client_list)
     for ch in range(1, NUM_CH_DEFAULT):
         if get_ch_state(env, ch) == LEASE:
             lease_list.append(ch)
 
+    #print("lease_list: ", lease_list)
     for cr in range(NUM_CPE_DEFAULT):
         if client_list[cr] not in lease_list:
             client_list[cr] = 0
 
+    #print(client_list)
     return 1

@@ -4,6 +4,8 @@ from licensed_band_user import *
 from transmission import *
 from algorithm import *
 from multiprocessing import Process
+import time
+#import sys
 
 INTERRUPT_FLAG = 0
 
@@ -13,37 +15,39 @@ def main():
     # initialize environment channel list
     share_env1 = create_environment()
 
-    print(share_env1[:])
-
     # initialize base station
     bs = BS(0)
 
     # CPE action list
     # actions list (EDITABLE)
     # (delay, target)
-    action_list = [[ACTION(1, 1, 10), ACTION(1, 2, 10), ACTION(1, 3, 10), ACTION(1, 4, 10), ACTION(1, 5, 10)],
-                   [ACTION(2, 3, 10), ACTION(2, 2, 10), ACTION(2, 1, 10), ACTION(2, 2, 10), ACTION(2, 1, 10)],
-                   [ACTION(3, 62, 10), ACTION(3, 1, 10), ACTION(3, 3, 10), ACTION(3, 4, 10), ACTION(3, 5, 10)],
-                   [ACTION(4, 62, 10), ACTION(4, 5, 10), ACTION(4, 4, 10), ACTION(4, 2, 10), ACTION(4, 1, 10)],
-                   [ACTION(5, 62, 10), ACTION(5, 5, 10), ACTION(5, 1, 10), ACTION(5, 1, 10), ACTION(5, 1, 10)],
-                   [ACTION(6, 62, 10), ACTION(6, 6, 10), ACTION(6, 6, 10), ACTION(6, 6, 10), ACTION(6, 6, 10)],
-                   [ACTION(1, 62, 10), ACTION(1, 5, 10), ACTION(1, 5, 10), ACTION(1, 5, 10), ACTION(1, 5, 10)]]
+    action_list = [[ACTION(1, 1, 10), ACTION(1, 11, 10)],
+                   [ACTION(2, 2, 10), ACTION(2, 12, 10)],
+                   [ACTION(3, 3, 10), ACTION(3, 13, 10)],
+                   [ACTION(4, 4, 10), ACTION(4, 14, 10)],
+                   [ACTION(5, 5, 10), ACTION(5, 15, 10)],
+                   [ACTION(6, 6, 10), ACTION(6, 16, 10)],
+                   [ACTION(1, 7, 10), ACTION(1, 17, 10)]]
 
-    schedule_list = [[0, 2, 2, 3, 4],
-                     [0, 2, 2, 3, 4],
-                     [0, 2, 2, 3, 4],
-                     [0, 2, 2, 3, 4],
-                     [0, 2, 2, 3, 4],
-                     [0, 2, 2, 3, 4],
-                     [0, 2, 2, 3, 4],
-                     [0, 2, 2, 3, 4],
-                     [0, 2, 2, 3, 4],
-                     [0, 2, 2, 3, 4],
-                     [0, 2, 2, 3, 4]]
+    schedule_list = [[6, 6, 7, 8, 9],
+                     [6, 6, 7, 8, 9],
+                     [6, 6, 7, 8, 9],
+                     [6, 6, 7, 8, 9],
+                     [6, 6, 7, 8, 9],
+                     [6, 6, 7, 8, 9],
+                     [6, 6, 7, 8, 9],
+                     [6, 6, 7, 8, 9],
+                     [6, 6, 7, 8, 9],
+                     [6, 6, 7, 8, 9],
+                     [6, 6, 7, 8, 9]]
 
     print("Program Starts")
 
-    # launch multiprocess for CPE
+    # launch multiprocess
+
+    t = Process(target=timing)
+    t.start()
+
     b = Process(target=bs_process, args=(share_env1, bs))
     print("Program runs")
     cpe_proc = []
@@ -64,8 +68,6 @@ def main():
         c.start()
         cpe_proc.append(c)
 
-    print(share_env1[:])
-
     # recycle all processes
     for c in cpe_proc:
         c.join()
@@ -74,12 +76,23 @@ def main():
         l.join()
 
     b.join()
+    t.join()
     print("Program ends")
 
     return 0
 
 
+def timing():
+    i = 0
+    while True:
+        print("    Time: ", i)
+        time.sleep(1)
+        i += 1
+
+
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
+    #stdoutOrigin = sys.stdout
+    #sys.stdout = open("log.txt", "w")
     main()
 

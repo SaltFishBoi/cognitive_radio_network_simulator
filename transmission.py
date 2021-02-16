@@ -86,7 +86,6 @@ def create_environment():
             env[i] = FREE
         else:
             env[i] = 0
-    print(env[:])
     return env
 
 

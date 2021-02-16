@@ -111,7 +111,7 @@ def cpe_process(env, source_num, device, actions):
         if device.get_state() == CR_REQUEST:
             delay = actions[i].get_delay()
             # clear out delay
-            actions[i].set_delay(0)
+            #actions[i].set_delay(0)
             cpe_request(env, device, actions[i].get_target(), delay)
         elif device.get_state() == CR_SEND:
             cpe_send(env, device, actions[i].get_target(), device.get_channel(), actions[i].get_duration())
@@ -124,6 +124,8 @@ def cpe_process(env, source_num, device, actions):
         else:
             if i < len(actions):
                 device.set_state(CR_REQUEST)
+            else:
+                cpe_idle(env, device)
 
     return 0
 
@@ -169,8 +171,8 @@ def cpe_request(env, source, target, delay):
         if (msg[1] == source.get_identifier()) and (msg[2] == BS_REQUEST):
             print("CPE " + str(msg[0]) + " -> " + str(source.get_identifier()) + " request receive")
             cpe_response(env, source, msg[0], msg[3])
-            source.set_state(CR_RECEIVE)
-            source.set_channel(msg[3])
+            #source.set_state(CR_RECEIVE)
+            #source.set_channel(msg[3])
 
             # end the timer
             timer.value = TIME_OUT
@@ -190,7 +192,7 @@ def cpe_request(env, source, target, delay):
         # start timer
         # prime number wait time
         timer.value = TIMER_DEFAULT
-        print("CPE " + str(source.get_identifier()) + " time out at " + str(CPE_TIMEOUT[p]) + " seconds")
+        #print("CPE " + str(source.get_identifier()) + " time out at " + str(CPE_TIMEOUT[p]) + " seconds")
         t = Process(target=cpe_timer_handler, args=(timer, CPE_TIMEOUT[p]))
         p = (p + 1) % len(CPE_TIMEOUT)
         t.start()
@@ -249,6 +251,9 @@ def cpe_response(env, source, target, ch):
 def cpe_send(env, source, target, ch, duration):
     print("CPE " + str(source.get_identifier()) + " -> " + str(target) + " send begins")
 
+    # environment update
+    set_ch_state(env, ch, LEASE)
+
     loop_time = float(duration) / TIME_INTERVAL
 
     for i in range(int(loop_time)):
@@ -269,7 +274,7 @@ def cpe_receive(env, source, target, ch):
         # check for valid receive message
 
         if get_ch_state(env, ch) == BUSY:
-            source.set_state(CR_REQUEST)
+            source.set_state(IDLE)
 
         msg = receive(env, ch)
         time.sleep(TIME_INTERVAL)
@@ -306,7 +311,7 @@ def cpe_done(env, source, target, ch):
 
             # in case no message received, but the state is changed
             if get_ch_state(env, ch) != LEASE:
-                source.set_state(CR_REQUEST)
+                source.set_state(IDLE)
                 timer.value = TIME_OUT
                 t.terminate()
                 t.join()
@@ -319,5 +324,14 @@ def cpe_done(env, source, target, ch):
                 t.terminate()
                 t.join()
 
-    source.set_state(CR_REQUEST)
+    source.set_state(IDLE)
+    return 1
+
+def cpe_idle(env, source):
+    msg = receive(env, RESERVED_CH)
+    time.sleep(TIME_INTERVAL)
+    if (msg[1] == source.get_identifier()) and (msg[2] == BS_REQUEST):
+        print("CPE " + str(msg[0]) + " -> " + str(source.get_identifier()) + " request receive")
+        cpe_response(env, source, msg[0], msg[3])
+
     return 1
